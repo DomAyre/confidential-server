@@ -1,5 +1,6 @@
-# confidential-server
+# Confidential Server
 
+[![CI](https://github.com/DomAyre/confidential-server/actions/workflows/ci.yml/badge.svg?event=push)](https://github.com/DomAyre/confidential-server/actions/workflows/ci.yml)
 
 - [Overview](#overview)
 - [Technologies](#technologies)
