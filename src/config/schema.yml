@@ -1,0 +1,27 @@
+$schema: "http://json-schema.org/draft-07/schema#"
+type: object
+required:
+  - serve
+
+properties:
+  serve:
+    type: array
+    items:
+      type: object
+      required: [path, policies]
+      properties:
+        path:
+          type: string
+        policies:
+          oneOf:
+            - type: string
+              enum: [all]
+            - type: array
+              items:
+                type: string
+
+  security_policies:
+    type: object
+    additionalProperties:
+      type: string
+      pattern: "^[A-Za-z0-9+/]+={0,2}$"
