@@ -37,6 +37,8 @@ The AMD SEV-SNP hardware includes a component which produces an attestation repo
 
 If all of these conditions are satisfied, we can be confident the client is running exactly the code we have explicitly trusted.
 
+In order to protect from spoofing, it's vital to only trust security policies relating to containers who will only ever present attestation reports to your server. Otherwise attackers can get attestation reports outside of the normal workflow and use them to get the data in environments other than the intended environments.
+
 ## Contributing
 
 All development dependencies are defined in [devcontainer.json](.devcontainer/devcontainer.json).
