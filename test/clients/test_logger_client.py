@@ -8,14 +8,13 @@ PROJECT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 
 @pytest.fixture()
 def server():
-    subprocess.Popen([
+    process = subprocess.Popen([
         "python", "src/server/run.py",
         "--config", "examples/config/single_file_single_dir_single_policy.yml"
     ])
     yield
-    subprocess.Popen([
-        "pkill", "-f", "python src/server/run.py"
-    ])
+    process.terminate()
+    process.wait()
 
 
 def build_image(client, dockerfile: str, **kwargs):
