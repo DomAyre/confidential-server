@@ -27,13 +27,13 @@ Start the server locally
 
 ```
 python src/server/run.py \
-  --config examples/config/single_path_single_policy.yml
+  --config examples/config/single_file_single_policy.yml
 ```
 
 Call the `/fetch` endpoint followed by a path which must match a path in your config.
 
 ```
-curl http://localhost:5000/fetch/readme.md --output result.md
+curl http://localhost:5000/fetch/readme.md
 ```
 
 ## Trust Model
