@@ -20,7 +20,8 @@
 					"file:///workspaces/confidential-server/src/config/schema.yml": "file:///**/examples/**/*.yml"
 				},
 				"files.exclude": {
-					"**/__pycache__": true
+					"**/__pycache__": true,
+					"**/.pytest_cache": true
 				},
 				"python.testing.pytestArgs": [
 					"test"
