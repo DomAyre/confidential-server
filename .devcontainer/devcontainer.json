@@ -6,5 +6,13 @@
 			"installTools": true,
 			"version": "3.12"
 		}
-	}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"redhat.vscode-yaml"
+			]
+		}
+	},
+	"postCreateCommand": "pip install -r test/requirements.txt"
 }
