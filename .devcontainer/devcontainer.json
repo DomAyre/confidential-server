@@ -1,6 +1,9 @@
 {
 	"name": "Ubuntu",
 	"image": "mcr.microsoft.com/devcontainers/base:jammy",
+	"containerEnv": {
+		"PYTHONPATH": "/workspaces/confidential-server/src"
+	},
 	"features": {
 		"ghcr.io/devcontainers/features/python:1": {
 			"installTools": true,
@@ -17,7 +20,8 @@
 					"file:///workspaces/confidential-server/src/config/schema.yml": "file:///**/examples/**/*.yml"
 				},
 				"files.exclude": {
-					"**/__pycache__": true
+					"**/__pycache__": true,
+					"**/.pytest_cache": true
 				},
 				"python.testing.pytestArgs": [
 					"test"
@@ -27,5 +31,5 @@
 			}
 		}
 	},
-	"postCreateCommand": "pip install -r test/requirements.txt"
+	"postCreateCommand": "pip install -r src/requirements.txt -r test/requirements.txt"
 }
