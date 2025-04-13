@@ -16,8 +16,25 @@ This server protects data served by cryptographically verifying clients are runn
 
 Users must be able to easily understand the server code in order to trust it, therefore its based on widely used technologies:
 
-- Server - written as a [python](https://www.python.org) package
+- Server
+  - Written as a [python](https://www.python.org) package
+  - The server is implemented with [Flask](https://flask.palletsprojects.com/en/stable/)
 - Clients - [docker](https://www.docker.com) containers running on [confidential Azure container instances](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-confidential-overview)
+
+## Usage
+
+Start the server locally
+
+```
+python src/server/run.py \
+  --config examples/config/single_path_single_policy.yml
+```
+
+Call the `/fetch` endpoint followed by a path which must match a path in your config.
+
+```
+curl http://localhost:5000/fetch/readme.md --output result.md
+```
 
 ## Trust Model
 
