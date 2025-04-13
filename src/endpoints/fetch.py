@@ -9,13 +9,11 @@ def fetch(target: str, args: ServerConfig):
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     absolute_target = os.path.join(project_root, target)
 
-    # Ensure target is an actual file or directory
-    if not os.path.exists(absolute_target):
+    # Ensure target is an actual file or directory and defined in the server
+    # configuration. The application shouln't distinguish between files which
+    # don't exist and files not included in the configuration.
+    if not os.path.exists(absolute_target) or target not in (target.path for target in args.config.serve):
         return f"Target '{target}' does not exist.", 404
-
-    # Ensure target is defined in server configuration
-    if target not in (target.path for target in args.config.serve):
-        return f"Target '{target}' is not defined in the server configuration.", 400
 
     # If it's a file, just send it, if it's a directory, zip it first
     if os.path.isfile(absolute_target):
