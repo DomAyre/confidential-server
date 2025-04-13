@@ -5,6 +5,7 @@
 - [Technologies](#technologies)
 - [Trust Model](#trust-model)
 - [Contributing](#contributing)
+  - [Testing](#testing)
 
 ## Overview
 
@@ -40,3 +41,11 @@ If all of these conditions are satisfied, we can be confident the client is runn
 All development dependencies are defined in [devcontainer.json](.devcontainer/devcontainer.json).
 
 See the [Development Containers](https://containers.dev) documentation for details of how to use it, either locally or via a hosted runner such as [Github Codespaces](https://github.com/features/codespaces).
+
+### Testing
+
+All tests are based on [pytest](https://pytest.org). To run all tests, simply run
+
+```
+pytest
+```

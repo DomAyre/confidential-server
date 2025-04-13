@@ -6,5 +6,18 @@
 			"installTools": true,
 			"version": "3.12"
 		}
-	}
+	},
+	"customizations": {
+		"vscode": {
+			"extensions": [
+				"redhat.vscode-yaml"
+			],
+			"settings": {
+				"yaml.schemas": {
+					"file:///workspaces/confidential-server/src/config/schema.yml": "file:///**/examples/**/*.yml"
+				}
+			}
+		}
+	},
+	"postCreateCommand": "pip install -r test/requirements.txt"
 }
