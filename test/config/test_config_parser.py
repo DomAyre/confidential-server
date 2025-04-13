@@ -1,7 +1,7 @@
 import pytest
 from utils import configs
 import yaml
-from src.config.parser import parse_config_file
+from config.parser import parse_config_file
 import tempfile
 
 

@@ -1,6 +1,9 @@
 {
 	"name": "Ubuntu",
 	"image": "mcr.microsoft.com/devcontainers/base:jammy",
+	"containerEnv": {
+		"PYTHONPATH": "/workspaces/confidential-server/src"
+	},
 	"features": {
 		"ghcr.io/devcontainers/features/python:1": {
 			"installTools": true,
