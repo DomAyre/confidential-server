@@ -44,6 +44,13 @@ curl http://localhost:5000/fetch/examples --output examples.zip
 unzip examples.zip
 ```
 
+You can also run example client containers
+
+```
+docker build -t logger-client -f examples/clients/logger.Dockerfile .
+docker run --net=host logger-client
+```
+
 ## Trust Model
 
 Clients of confidential server must be running on an [AMD SEV-SNP](https://www.amd.com/en/developer/sev.html) trusted execution environment or TEE.
