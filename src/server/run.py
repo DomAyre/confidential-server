@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from server.args import parse_args
 from endpoints.fetch import fetch as _fetch
 
@@ -6,9 +6,9 @@ def create_app(args):
 
     app = Flask(__name__)
 
-    @app.route('/fetch/<path:target>', methods=['GET'])
+    @app.route('/fetch/<path:target>', methods=['POST'])
     def fetch(target):
-        return _fetch(target, args)
+        return _fetch(request, target, args)
 
     return app
 

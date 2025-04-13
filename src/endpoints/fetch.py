@@ -1,10 +1,15 @@
 import os
 from config.parser import ServerConfig
-from flask import send_file
+from flask import send_file, jsonify
 
 from lib.zip_directory import zip_directory
 
-def fetch(target: str, args: ServerConfig):
+def fetch(req, target: str, args: ServerConfig):
+
+    if not req.is_json:
+        return jsonify({"error": "Request body must be JSON"}), 415
+
+    wrapping_key = req.json.get('wrapping_key')
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     absolute_target = os.path.join(project_root, target)
