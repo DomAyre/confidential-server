@@ -18,9 +18,8 @@ def server():
     ])
 
 
-def build_image(dockerfile: str, **kwargs):
-    client = docker.from_env()
-    return client, client.images.build(
+def build_image(client, dockerfile: str, **kwargs):
+    return client.images.build(
         path=PROJECT_ROOT,
         dockerfile=dockerfile,
         tag="logger-client",
@@ -29,9 +28,12 @@ def build_image(dockerfile: str, **kwargs):
 
 
 def test_logger_client_build(server):
-    client, logger_image = build_image(f"{PROJECT_ROOT}/examples/clients/logger.Dockerfile")
+    client = docker.from_env()
     container_logs = client.containers.run(
-        image=logger_image,
+        image=build_image(
+            client,
+            f"{PROJECT_ROOT}/examples/clients/logger.Dockerfile",
+        ),
         network="host"
     )
     with open(f"{PROJECT_ROOT}/readme.md", "r") as file:
