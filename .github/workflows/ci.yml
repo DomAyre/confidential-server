@@ -17,4 +17,6 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - run: pip install -r test/requirements.txt
+
     - run: pytest -sv test/config/test_config_schema.py
