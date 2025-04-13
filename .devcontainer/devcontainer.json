@@ -15,7 +15,15 @@
 			"settings": {
 				"yaml.schemas": {
 					"file:///workspaces/confidential-server/src/config/schema.yml": "file:///**/examples/**/*.yml"
-				}
+				},
+				"files.exclude": {
+					"**/__pycache__": true
+				},
+				"python.testing.pytestArgs": [
+					"test"
+				],
+				"python.testing.unittestEnabled": false,
+				"python.testing.pytestEnabled": true
 			}
 		}
 	},
