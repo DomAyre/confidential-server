@@ -4,6 +4,7 @@
 
 - [Overview](#overview)
 - [Technologies](#technologies)
+- [Usage](#usage)
 - [Trust Model](#trust-model)
 - [Contributing](#contributing)
   - [Testing](#testing)
