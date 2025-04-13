@@ -6,7 +6,7 @@ This server protects data served by cryptographically verifying clients are runn
 
 Users must be able to easily understand the server code in order to trust it, therefore its based on widely used technologies:
 
-- Server - written in [python](https://www.python.org)
+- Server - written as a [python](https://www.python.org) package
 - Clients - [docker](https://www.docker.com) containers running on [confidential Azure container instances](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-confidential-overview)
 
 ## Trust Model
