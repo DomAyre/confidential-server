@@ -27,5 +27,5 @@
 			}
 		}
 	},
-	"postCreateCommand": "pip install -r test/requirements.txt"
+	"postCreateCommand": "pip install -r src/requirements.txt -r test/requirements.txt"
 }
