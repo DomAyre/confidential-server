@@ -10,7 +10,7 @@ def fetch(target: str, args: ServerConfig):
     absolute_target = os.path.join(project_root, target)
 
     # Ensure target is an actual file or directory and defined in the server
-    # configuration. The application shouln't distinguish between files which
+    # configuration. The application shouldn't distinguish between files which
     # don't exist and files not included in the configuration.
     if not os.path.exists(absolute_target) or target not in (target.path for target in args.config.serve):
         return f"Target '{target}' does not exist.", 404
