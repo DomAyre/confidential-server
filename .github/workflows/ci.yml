@@ -29,7 +29,6 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - run: pip install -r test/requirements.txt
-    - run: sudo usermod -aG docker $USER
     - run: pytest -sv test/clients
       env:
         PYTHONPATH: ${{ github.workspace }}/src
