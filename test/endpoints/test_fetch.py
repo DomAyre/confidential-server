@@ -1,6 +1,8 @@
 from argparse import Namespace
 from config.parser import parse_config_file
 from server.run import create_app
+from encryption_wrapper.src.generate_keys import generate_keys
+from encryption_wrapper.src.format_public_key import format_public_key
 import zipfile
 import io
 
@@ -12,26 +14,26 @@ def get_test_client(config_path):
 
 def test_requesting_file_in_config():
     server = get_test_client("examples/config/single_file_single_policy.yml")
-    response = server.post('/fetch/readme.md', json={'wrapping_key': None})
+    response = server.post('/fetch/readme.md', json={'wrapping_key': format_public_key(generate_keys()[1])})
     assert response.status_code == 200
 
 
 def test_posting_file_which_doesnt_exist():
     server = get_test_client("examples/config/single_file_single_policy.yml")
-    response = server.post('/fetch/doesnt_exist.md', json={'wrapping_key': None})
+    response = server.post('/fetch/doesnt_exist.md', json={'wrapping_key': format_public_key(generate_keys()[1])})
     assert response.status_code == 404
 
 
 def test_posting_file_not_in_config():
     server = get_test_client("examples/config/single_file_single_policy.yml")
-    response = server.post('/fetch/license', json={'wrapping_key': None})
+    response = server.post('/fetch/license', json={'wrapping_key': format_public_key(generate_keys()[1])})
     assert response.status_code == 404
 
 
 def test_posting_dir_in_config():
     server = get_test_client("examples/config/single_dir_single_policy.yml")
 
-    response = server.post('/fetch/examples', json={'wrapping_key': None})
+    response = server.post('/fetch/examples', json={'wrapping_key': format_public_key(generate_keys()[1])})
     assert response.status_code == 200
 
     zip_file = zipfile.ZipFile(io.BytesIO(response.data))
