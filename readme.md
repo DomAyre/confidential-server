@@ -34,13 +34,22 @@ python src/server/run.py \
 Call the `/fetch` endpoint followed by a path which must match a path in your config.
 
 ```
-curl http://localhost:5000/fetch/readme.md
+curl \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"wrapping_key": ""}' \
+  http://localhost:5000/fetch/readme.md
 ```
 
 Call `/fetch` for a directory and unzip it
 
 ```
-curl http://localhost:5000/fetch/examples --output examples.zip
+curl \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d '{"wrapping_key": ""}' \
+  --output examples.zip \
+  http://localhost:5000/fetch/examples
 unzip examples.zip
 ```
 
