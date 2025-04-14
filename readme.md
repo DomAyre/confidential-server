@@ -31,13 +31,19 @@ python src/server/run.py \
   --config examples/config/single_file_single_dir_single_policy.yml
 ```
 
+Generate a public/private key pair for wrapping the server response
+
+```
+python tools/encryption_wrapper/src/generate_keys.py
+```
+
 Call the `/fetch` endpoint followed by a path which must match a path in your config.
 
 ```
 curl \
   -X POST \
   -H "Content-Type: application/json" \
-  -d '{"wrapping_key": ""}' \
+  -d "{\"wrapping_key\": \"$(python tools/encryption_wrapper/src/format_public_key.py)\"}" \
   http://localhost:5000/fetch/readme.md
 ```
 
@@ -47,7 +53,7 @@ Call `/fetch` for a directory and unzip it
 curl \
   -X POST \
   -H "Content-Type: application/json" \
-  -d '{"wrapping_key": ""}' \
+  -d '{"wrapping_key": $(python tools/encryption_wrapper/src/format_public_key.py)}' \
   --output examples.zip \
   http://localhost:5000/fetch/examples
 unzip examples.zip
