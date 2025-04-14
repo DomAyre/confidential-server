@@ -26,7 +26,7 @@ def build_image(client, dockerfile: str, **kwargs):
     )[0]
 
 
-def test_logger_client_build(server):
+def test_logger_client_build_and_run(server):
     client = docker.from_env()
     container_logs = client.containers.run(
         image=build_image(
