@@ -21,7 +21,8 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"eamodio.gitlens"
 			],
 			"settings": {
 				"yaml.schemas": {
