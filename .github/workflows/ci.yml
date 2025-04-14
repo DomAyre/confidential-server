@@ -14,21 +14,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest -sv test/config
 
   test-endpoints:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest -sv test/endpoints
 
   test-clients:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest -sv test/clients
       env:
         PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}/tools
