@@ -47,15 +47,22 @@ curl \
   http://localhost:5000/fetch/readme.md
 ```
 
+to decrypt the result, add:
+
+```
+| xargs -0 python tools/encryption_wrapper/src/decrypt.py
+```
+
 Call `/fetch` for a directory and unzip it
 
 ```
 curl \
   -X POST \
   -H "Content-Type: application/json" \
-  -d '{"wrapping_key": $(python tools/encryption_wrapper/src/public_key_to_b64.py)}' \
-  --output examples.zip \
-  http://localhost:5000/fetch/examples
+  -d "{\"wrapping_key\": \"$(python tools/encryption_wrapper/src/public_key_to_b64.py)\"}" \
+  http://localhost:5000/fetch/examples \
+  | xargs -0 python tools/encryption_wrapper/src/decrypt.py \
+    --out examples.zip
 unzip examples.zip
 ```
 

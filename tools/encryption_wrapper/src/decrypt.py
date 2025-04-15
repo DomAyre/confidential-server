@@ -43,7 +43,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Decrypt data with private key')
     parser.add_argument('data', type=payload,
                         help='JSON string or path to JSON file containing encrypted data')
+    parser.add_argument('--out', help='Path to the output file')
     add_private_key_arg(parser)
     args = parser.parse_args()
 
-    print(decrypt(args.data, file_to_private_key(args.private_key)).decode())
+    decrypted_data = decrypt(args.data, file_to_private_key(args.private_key))
+
+    if args.out:
+        with open(args.out, 'wb') as f:
+            f.write(decrypted_data)
+    else:
+        print(decrypted_data.decode())
