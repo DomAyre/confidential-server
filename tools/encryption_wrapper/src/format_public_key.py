@@ -2,7 +2,7 @@ from cryptography.hazmat.primitives.asymmetric import rsa
 from cryptography.hazmat.primitives import serialization
 import base64
 import argparse
-from load_public_key import load_public_key
+from encryption_wrapper.src.load_public_key import load_public_key
 
 
 def format_public_key(public_key: rsa.RSAPublicKey) -> str:
