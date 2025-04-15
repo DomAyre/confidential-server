@@ -7,7 +7,7 @@ from encryption_wrapper.src.lib.args import add_private_key_arg
 from encryption_wrapper.src.lib.file_to_private_key import file_to_private_key
 
 
-def private_key_to_b64(private_key: rsa.RSAPrivateKey) -> str:
+def private_key_to_b64(private_key: rsa.RSAPrivateKey) -> bytes:
     return base64.b64encode(
         private_key.private_bytes(
             encoding=serialization.Encoding.PEM,
