@@ -12,6 +12,7 @@ RUN chmod +x -R /usr/local/bin/encryption_wrapper
 
 ENV CONF_SERVER_URL=${CONF_SERVER_URL}
 ENV PATH="/opt/venv/bin:$PATH"
+ENV PYTHONPATH="/usr/local/bin/"
 CMD ["/bin/bash", "-c", " \
     python3 /usr/local/bin/encryption_wrapper/src/generate_keys.py && \
     curl \
