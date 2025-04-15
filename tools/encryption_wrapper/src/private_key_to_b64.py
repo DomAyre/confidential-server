@@ -21,4 +21,4 @@ if __name__ == "__main__":
     parser = ArgumentParser(description="Convert a private key to base64 format.")
     add_private_key_arg(parser)
     args = parser.parse_args()
-    print(private_key_to_b64(file_to_private_key(args.private_key)))
+    print(private_key_to_b64(file_to_private_key(args.private_key)).decode())

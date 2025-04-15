@@ -30,10 +30,12 @@
 				},
 				"files.exclude": {
 					"**/__pycache__": true,
-					"**/.pytest_cache": true
+					"**/.pytest_cache": true,
+					".coverage": true
 				},
 				"python.testing.pytestArgs": [
-					"test"
+					"test",
+					"tools/encryption_wrapper/test"
 				],
 				"python.testing.unittestEnabled": false,
 				"python.testing.pytestEnabled": true
