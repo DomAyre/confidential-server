@@ -4,14 +4,14 @@ from flask import jsonify
 
 from encryption_wrapper.src.encrypt import encrypt
 from lib.zip_directory import zip_directory
-from encryption_wrapper.src.parse_public_key import parse_public_key
+from encryption_wrapper.src.lib.b64_to_public_key import b64_to_public_key
 
 def fetch(req, target: str, args: ServerConfig):
 
     if not req.is_json:
         return jsonify({"error": "Request body must be JSON"}), 415
 
-    wrapping_key = parse_public_key(req.json.get('wrapping_key'))
+    wrapping_key = b64_to_public_key(req.json.get('wrapping_key'))
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     absolute_target = os.path.join(project_root, target)

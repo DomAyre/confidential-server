@@ -19,7 +19,7 @@ CMD ["/bin/bash", "-c", " \
     curl \
         -X POST \
         -H \"Content-Type: application/json\" \
-        -d \"{\\\"wrapping_key\\\":\\\"$(python3 /usr/local/bin/encryption_wrapper/src/format_public_key.py)\\\"}\" \
+        -d \"{\\\"wrapping_key\\\":\\\"$(python3 /usr/local/bin/encryption_wrapper/src/public_key_to_b64.py)\\\"}\" \
         ${CONF_SERVER_URL}/fetch/readme.md \
     | xargs -0 python /usr/local/bin/encryption_wrapper/src/decrypt.py \
 "]

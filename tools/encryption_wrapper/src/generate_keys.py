@@ -3,6 +3,10 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.backends import default_backend
 import argparse
 
+from encryption_wrapper.src.lib.args import add_private_key_arg, add_public_key_arg
+from encryption_wrapper.src.private_key_to_file import private_key_to_file
+from encryption_wrapper.src.public_key_to_file import public_key_to_file
+
 
 def generate_key_pair():
     private_key = rsa.generate_private_key(
@@ -13,30 +17,12 @@ def generate_key_pair():
     return private_key, private_key.public_key()
 
 
-def save_key_pair(private_key, public_key, private_file="private_key.pem", public_file="public_key.pem"):
-    with open(private_file, "wb") as priv_file:
-        priv_file.write(private_key.private_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PrivateFormat.TraditionalOpenSSL,
-        encryption_algorithm=serialization.NoEncryption()
-    ))
-    with open(public_file, "wb") as pub_file:
-        pub_file.write(public_key.public_bytes(
-        encoding=serialization.Encoding.PEM,
-        format=serialization.PublicFormat.SubjectPublicKeyInfo
-    ))
-
-
-def parse_args():
-    parser = argparse.ArgumentParser(description='Generate RSA key pair')
-    parser.add_argument('--private-key', default="private_key.pem",
-                        help='Path where the private key will be saved (default: private_key.pem)')
-    parser.add_argument('--public-key', default="public_key.pem",
-                        help='Path where the public key will be saved (default: public_key.pem)')
-    return parser.parse_args()
-
-
 if __name__ == "__main__":
-    args = parse_args()
-    private_pem, public_pem = generate_key_pair()
-    save_key_pair(private_pem, public_pem, args.private_key, args.public_key)
+    parser = argparse.ArgumentParser(description='Generate RSA key pair')
+    add_public_key_arg(parser)
+    add_private_key_arg(parser)
+    args = parser.parse_args()
+
+    private_key, public_key = generate_key_pair()
+    private_key_to_file(private_key, args.private_key)
+    public_key_to_file(public_key, args.public_key)

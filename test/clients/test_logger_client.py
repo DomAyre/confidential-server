@@ -35,6 +35,5 @@ def test_logger_client_build_and_run(server):
         ),
         network="host"
     )
-    print(container_logs.decode("utf-8"))
-    # with open(f"{PROJECT_ROOT}/readme.md", "r") as file:
-    #     assert container_logs.decode("utf-8") == file.read()
+    with open(f"{PROJECT_ROOT}/readme.md", "rb") as file:
+        assert container_logs.strip() == file.read().strip()

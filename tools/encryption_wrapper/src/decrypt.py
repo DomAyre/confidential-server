@@ -6,7 +6,8 @@ from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 import os
 import base64
 
-from encryption_wrapper.src.load_private_key import load_private_key
+from encryption_wrapper.src.lib.file_to_private_key import file_to_private_key
+from encryption_wrapper.src.lib.args import add_private_key_arg
 
 
 def payload(data: str) -> dict:
@@ -30,24 +31,19 @@ def decrypt(encrypted_data: dict, private_key: rsa.RSAPrivateKey) -> bytes:
         )
     )
 
+    # Decrypt the data with the AES key
     iv = base64.b64decode(encrypted_data["iv"])
     ciphertext = base64.b64decode(encrypted_data["ciphertext"])
     auth_tag = base64.b64decode(encrypted_data["auth_tag"])
-
-    # Decrypt the data with the AES key
     decryptor = Cipher(algorithms.AES(aes_key), modes.GCM(iv, auth_tag)).decryptor()
     return decryptor.update(ciphertext) + decryptor.finalize()
 
 
-def parse_args():
+if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Decrypt data with private key')
     parser.add_argument('data', type=payload,
                         help='JSON string or path to JSON file containing encrypted data')
-    parser.add_argument('--private-key', default="private_key.pem",
-                        help='Path to the private key file (default: private_key.pem)')
-    return parser.parse_args()
+    add_private_key_arg(parser)
+    args = parser.parse_args()
 
-
-if __name__ == "__main__":
-    args = parse_args()
-    print(decrypt(args.data, load_private_key(args.private_key)).decode())
+    print(decrypt(args.data, file_to_private_key(args.private_key)).decode())
