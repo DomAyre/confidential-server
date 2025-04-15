@@ -1,7 +1,8 @@
 import os
 from config.parser import ServerConfig
-from flask import send_file, jsonify
+from flask import jsonify
 
+from encryption_wrapper.src.encrypt import encrypt
 from lib.zip_directory import zip_directory
 from encryption_wrapper.src.parse_public_key import parse_public_key
 
@@ -23,14 +24,7 @@ def fetch(req, target: str, args: ServerConfig):
 
     # If it's a file, just send it, if it's a directory, zip it first
     if os.path.isfile(absolute_target):
-        return send_file(
-            absolute_target,
-            download_name=os.path.basename(absolute_target),
-            as_attachment=True,
-        )
+        with open(absolute_target, 'rb') as file:
+            return jsonify(encrypt(file.read(), wrapping_key)), 200
     else:
-        return send_file(
-            zip_directory(absolute_target),
-            download_name=f"{os.path.basename(os.path.normpath(absolute_target))}.zip",
-            as_attachment=True,
-        )
+        return jsonify(encrypt(zip_directory(absolute_target), wrapping_key)), 200

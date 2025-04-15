@@ -6,8 +6,9 @@ ARG CONF_SERVER_URL="http://localhost:5000"
 RUN apt-get update && apt-get install -y curl
 
 # Install the wrappying_key tool
-COPY tools/encryption_wrapper /usr/local/bin/encryption_wrapper
+COPY tools/encryption_wrapper/requirements.txt /usr/local/bin/encryption_wrapper/requirements.txt
 RUN pip install -r /usr/local/bin/encryption_wrapper/requirements.txt
+COPY tools/encryption_wrapper /usr/local/bin/encryption_wrapper
 RUN chmod +x -R /usr/local/bin/encryption_wrapper
 
 ENV CONF_SERVER_URL=${CONF_SERVER_URL}
@@ -20,4 +21,5 @@ CMD ["/bin/bash", "-c", " \
         -H \"Content-Type: application/json\" \
         -d \"{\\\"wrapping_key\\\":\\\"$(python3 /usr/local/bin/encryption_wrapper/src/format_public_key.py)\\\"}\" \
         ${CONF_SERVER_URL}/fetch/readme.md \
+    | xargs -0 python /usr/local/bin/encryption_wrapper/src/decrypt.py \
 "]
