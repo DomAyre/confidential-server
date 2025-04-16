@@ -13,6 +13,13 @@ env:
   PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}/tools
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
+    - run: ruff check .
+
   test-config:
     runs-on: ubuntu-latest
     steps:
@@ -41,16 +48,9 @@ jobs:
     - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest -sv tools/encryption_wrapper/test
 
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
-    - run: ruff check .
-
   coverage:
     runs-on: ubuntu-latest
-    needs: [test-config, test-endpoints, test-clients, test-encryption-wrapper, ruff-lint]
+    needs: [test-config, test-endpoints, test-clients, test-encryption-wrapper]
     steps:
     - uses: actions/checkout@v4
     - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
