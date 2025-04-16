@@ -21,6 +21,10 @@ Users must be able to easily understand the server code in order to trust it, th
   - Written as a [python](https://www.python.org) package
   - The server is implemented with [Flask](https://flask.palletsprojects.com/en/stable/)
 - Clients - [docker](https://www.docker.com) containers running on [confidential Azure container instances](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-confidential-overview)
+- [Encryption Wrapper](tools/encryption_wrapper/)
+  - Uses hybrid encryption to allow large amount of data to be wrapped by a public key.
+  - Based on [pyca/cryptography](https://cryptography.io/en/latest/).
+  - Off the shelf hybrid encryption tools such as [Tink](https://developers.google.com/tink) were considered, but this custom solution keeps the implementation minimal and therefore the trusted computing base (TCB) as small as possible.
 
 ## Usage
 
