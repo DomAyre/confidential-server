@@ -49,26 +49,5 @@ jobs:
     - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest --cov=src --cov-fail-under=90 test
 
-  # Encryption Wrapper
-
-  encryption-wrapper-lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
-    - run: ruff check . --exclude tools/
-
-  encryption-wrapper-test:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
-    - run: pytest -sv tools/encryption_wrapper/test
-
-  encryption-wrapper-coverage:
-    runs-on: ubuntu-latest
-    needs: [encryption-wrapper-test]
-    steps:
-    - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
-    - run: pytest --cov=tools/encryption_wrapper --cov-fail-under=90 tools/encryption_wrapper
+  encryption-wrapper:
+    uses: ./.github/workflows/encryption_wrapper_ci.yml
