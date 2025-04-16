@@ -114,7 +114,7 @@ def test_public_key_to_b64_script(monkeypatch, tmp_path, capfd):
 
     # Verify output is valid base64
     try:
-        decoded = base64.b64decode(b64_output)
+        base64.b64decode(b64_output)
     except Exception:
         pytest.fail("Output is not valid base64")
 

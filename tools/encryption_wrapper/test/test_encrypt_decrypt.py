@@ -1,7 +1,6 @@
 import json
 import os
 import tempfile
-import pytest
 from pathlib import Path
 
 from encryption_wrapper.src.generate_keys import generate_key_pair

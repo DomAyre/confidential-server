@@ -1,12 +1,8 @@
 import os
-import tempfile
-import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 # Import the module functions to test
 from encryption_wrapper.src.generate_keys import generate_key_pair
-from encryption_wrapper.src.public_key_to_file import public_key_to_file
-from encryption_wrapper.src.private_key_to_file import private_key_to_file
 from encryption_wrapper.src.lib.file_to_public_key import file_to_public_key
 from encryption_wrapper.src.lib.file_to_private_key import file_to_private_key
 from encryption_wrapper.test.utils import run_script

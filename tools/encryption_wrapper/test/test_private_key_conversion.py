@@ -127,7 +127,7 @@ def test_private_key_to_b64_script(monkeypatch, tmp_path, capfd):
     b64_output = out.strip()
 
     try:
-        decoded = base64.b64decode(b64_output)
+        base64.b64decode(b64_output)
     except Exception:
         pytest.fail("Output is not valid base64")
 
