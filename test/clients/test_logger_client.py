@@ -26,7 +26,7 @@ def build_image(client, dockerfile: str, **kwargs):
     )[0]
 
 
-def test_logger_client_build(server):
+def test_logger_client_build_and_run(server):
     client = docker.from_env()
     container_logs = client.containers.run(
         image=build_image(
@@ -35,5 +35,5 @@ def test_logger_client_build(server):
         ),
         network="host"
     )
-    with open(f"{PROJECT_ROOT}/readme.md", "r") as file:
-        assert container_logs.decode("utf-8") == file.read()
+    with open(f"{PROJECT_ROOT}/readme.md", "rb") as file:
+        assert container_logs.strip() == file.read().strip()

@@ -9,26 +9,48 @@ on:
     types: [created]
   workflow_dispatch:
 
+env:
+  PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}/tools
+
 jobs:
-  test-config:
+  lint:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
+    - run: ruff check . --exclude tools/
+
+  test-config:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+    - uses: actions/checkout@v4
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest -sv test/config
 
   test-endpoints:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
     - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest -sv test/endpoints
 
   test-clients:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
     - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest -sv test/clients
-      env:
-        PYTHONPATH: ${{ github.workspace }}/src
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: [test-config, test-endpoints, test-clients]
+    steps:
+    - uses: actions/checkout@v4
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
+    - run: pytest --cov=src --cov-fail-under=90 test
+
+  encryption-wrapper:
+    uses: ./.github/workflows/encryption_wrapper_ci.yml

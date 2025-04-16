@@ -2,7 +2,7 @@
 	"name": "Ubuntu",
 	"image": "mcr.microsoft.com/devcontainers/base:jammy",
 	"containerEnv": {
-		"PYTHONPATH": "/workspaces/confidential-server/src"
+		"PYTHONPATH": "/workspaces/confidential-server/src:/workspaces/confidential-server/tools"
 	},
 	"features": {
 		"ghcr.io/devcontainers/features/python:1": {
@@ -21,7 +21,9 @@
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"redhat.vscode-yaml"
+				"redhat.vscode-yaml",
+				"eamodio.gitlens",
+				"GitHub.vscode-pull-request-github"
 			],
 			"settings": {
 				"yaml.schemas": {
@@ -29,15 +31,17 @@
 				},
 				"files.exclude": {
 					"**/__pycache__": true,
-					"**/.pytest_cache": true
+					"**/.pytest_cache": true,
+					".coverage": true
 				},
 				"python.testing.pytestArgs": [
-					"test"
+					"test",
+					"tools/encryption_wrapper/test"
 				],
 				"python.testing.unittestEnabled": false,
 				"python.testing.pytestEnabled": true
 			}
 		}
 	},
-	"postCreateCommand": "pip install -r src/requirements.txt -r test/requirements.txt"
+	"postCreateCommand": "pip install -r test/requirements.txt -r tools/**/requirements.txt"
 }

@@ -21,6 +21,10 @@ Users must be able to easily understand the server code in order to trust it, th
   - Written as a [python](https://www.python.org) package
   - The server is implemented with [Flask](https://flask.palletsprojects.com/en/stable/)
 - Clients - [docker](https://www.docker.com) containers running on [confidential Azure container instances](https://learn.microsoft.com/en-us/azure/container-instances/container-instances-confidential-overview)
+- [Encryption Wrapper](tools/encryption_wrapper/)
+  - Uses hybrid encryption to allow large amount of data to be wrapped by a public key.
+  - Based on [pyca/cryptography](https://cryptography.io/en/latest/).
+  - Off the shelf hybrid encryption tools such as [Tink](https://developers.google.com/tink) were considered, but this custom solution keeps the implementation minimal and therefore the trusted computing base (TCB) as small as possible.
 
 ## Usage
 
@@ -31,16 +35,38 @@ python src/server/run.py \
   --config examples/config/single_file_single_dir_single_policy.yml
 ```
 
+Generate a public/private key pair for wrapping the server response
+
+```
+python tools/encryption_wrapper/src/generate_keys.py
+```
+
 Call the `/fetch` endpoint followed by a path which must match a path in your config.
 
 ```
-curl http://localhost:5000/fetch/readme.md
+curl \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d "{\"wrapping_key\": \"$(python tools/encryption_wrapper/src/public_key_to_b64.py)\"}" \
+  http://localhost:5000/fetch/readme.md
+```
+
+to decrypt the result, add:
+
+```
+| xargs -0 python tools/encryption_wrapper/src/decrypt.py
 ```
 
 Call `/fetch` for a directory and unzip it
 
 ```
-curl http://localhost:5000/fetch/examples --output examples.zip
+curl \
+  -X POST \
+  -H "Content-Type: application/json" \
+  -d "{\"wrapping_key\": \"$(python tools/encryption_wrapper/src/public_key_to_b64.py)\"}" \
+  http://localhost:5000/fetch/examples \
+  | xargs -0 python tools/encryption_wrapper/src/decrypt.py \
+    --out examples.zip
 unzip examples.zip
 ```
 
@@ -82,3 +108,7 @@ All tests are based on [pytest](https://pytest.org). To run all tests, simply ru
 ```
 pytest
 ```
+
+### Linting
+
+Linting is done with [ruff](https://github.com/astral-sh/ruff)

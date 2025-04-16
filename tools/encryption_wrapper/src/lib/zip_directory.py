@@ -3,7 +3,7 @@ import os
 import zipfile
 
 
-def zip_directory(absolute_target: str) -> io.BytesIO:
+def zip_directory(absolute_target: str) -> bytes:
     memory_file = io.BytesIO()
 
     with zipfile.ZipFile(memory_file, 'w', zipfile.ZIP_DEFLATED) as zf:
@@ -17,4 +17,4 @@ def zip_directory(absolute_target: str) -> io.BytesIO:
 
     memory_file.seek(0)
 
-    return memory_file
+    return memory_file.read()
