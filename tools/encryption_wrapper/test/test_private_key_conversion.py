@@ -13,20 +13,16 @@ from encryption_wrapper.test.utils import run_script
 
 
 def test_private_key_to_file():
-    """Test saving a private key to a file and reading it back."""
     private_key, _ = generate_key_pair()
 
     with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
         key_path = tmpfile.name
 
     try:
-        # Save private key to file
+        # Save private key to file then read it back
         private_key_to_file(private_key, key_path)
-
-        # Read it back
         loaded_key = file_to_private_key(key_path)
 
-        # Verify it's a private key
         assert isinstance(loaded_key, rsa.RSAPrivateKey)
         assert loaded_key.key_size == 2048
     finally:
@@ -34,14 +30,10 @@ def test_private_key_to_file():
 
 
 def test_private_key_to_b64():
-    """Test converting a private key to base64 and back."""
     private_key, _ = generate_key_pair()
-
-    # Convert to base64
     b64_key = private_key_to_b64(private_key)
 
-    # Verify it's a string
-    assert isinstance(b64_key, bytes)  # In the implementation it returns bytes
+    assert isinstance(b64_key, str)
 
     # Verify it can be decoded as base64
     try:
@@ -58,23 +50,17 @@ def test_private_key_to_b64():
 
 
 def test_private_key_conversion_full_cycle():
-    """Test a complete cycle of conversions for a private key."""
     original_key, _ = generate_key_pair()
 
-    # Convert to base64
+    # Convert to base64 and back
     b64_key = private_key_to_b64(original_key)
-
-    # Convert back to key
     key_from_b64 = b64_to_private_key(b64_key)
 
     with tempfile.NamedTemporaryFile(delete=False) as tmpfile:
         key_path = tmpfile.name
 
     try:
-        # Save to file
         private_key_to_file(key_from_b64, key_path)
-
-        # Read from file
         key_from_file = file_to_private_key(key_path)
 
         # Final verification - should still be a valid private key
@@ -109,31 +95,24 @@ def test_private_key_conversion_full_cycle():
 
 
 def test_private_key_to_file_script(monkeypatch, tmp_path):
-    """Test the private_key_to_file.py script execution."""
-    # Generate a key and get its base64 representation
     private_key, _ = generate_key_pair()
     b64_key = private_key_to_b64(private_key)
 
-    # Prepare temp file path
     private_key_path = str(tmp_path / 'test_private.pem')
 
     run_script(monkeypatch, " ".join([
         "src/private_key_to_file.py",
-        b64_key.decode('utf-8'),  # Convert bytes to string for command line
+        b64_key,
         '--private-key', private_key_path
     ]))
 
-    # Check that file was created
     assert os.path.exists(private_key_path)
 
-    # Verify the key was saved properly
     loaded_private_key = file_to_private_key(private_key_path)
     assert isinstance(loaded_private_key, rsa.RSAPrivateKey)
 
 
 def test_private_key_to_b64_script(monkeypatch, tmp_path, capfd):
-    """Test the private_key_to_b64.py script execution."""
-    # Generate a key pair and save the private key to a file
     private_key, _ = generate_key_pair()
     private_key_path = str(tmp_path / 'script_test_private.pem')
     private_key_to_file(private_key, private_key_path)
@@ -147,12 +126,10 @@ def test_private_key_to_b64_script(monkeypatch, tmp_path, capfd):
     out, _ = capfd.readouterr()
     b64_output = out.strip()
 
-    # Verify output is valid base64
     try:
         decoded = base64.b64decode(b64_output)
     except Exception:
         pytest.fail("Output is not valid base64")
 
-    # Verify we can convert it back to a private key
     loaded_key = b64_to_private_key(b64_output)
     assert isinstance(loaded_key, rsa.RSAPrivateKey)
