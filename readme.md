@@ -108,3 +108,7 @@ All tests are based on [pytest](https://pytest.org). To run all tests, simply ru
 ```
 pytest
 ```
+
+### Linting
+
+Linting is done with [ruff](https://github.com/astral-sh/ruff)
