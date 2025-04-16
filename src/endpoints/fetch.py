@@ -3,8 +3,8 @@ from config.parser import ServerConfig
 from flask import jsonify
 
 from encryption_wrapper.src.encrypt import encrypt
-from lib.zip_directory import zip_directory
 from encryption_wrapper.src.lib.b64_to_public_key import b64_to_public_key
+from encryption_wrapper.src.lib.zip_directory import zip_directory
 
 def fetch(req, target: str, args: ServerConfig):
 
