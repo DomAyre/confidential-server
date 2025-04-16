@@ -22,7 +22,8 @@
 		"vscode": {
 			"extensions": [
 				"redhat.vscode-yaml",
-				"eamodio.gitlens"
+				"eamodio.gitlens",
+				"GitHub.vscode-pull-request-github"
 			],
 			"settings": {
 				"yaml.schemas": {
