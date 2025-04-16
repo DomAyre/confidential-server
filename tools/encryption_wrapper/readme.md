@@ -22,5 +22,5 @@ The tool uses hybrid encryption to allow both encryption of large payloads and h
 
 - When decrypting:
 
-  - The AES-GCM key is decryped with the RSA private key
+  - The AES-GCM key is decrypted with the RSA private key
   - The encrypted payload is then decrypted with the AES-GCM key
