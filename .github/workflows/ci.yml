@@ -22,6 +22,7 @@ jobs:
 
   test-config:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
     - uses: actions/checkout@v4
     - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
@@ -29,6 +30,7 @@ jobs:
 
   test-endpoints:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
     - uses: actions/checkout@v4
     - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
@@ -36,6 +38,7 @@ jobs:
 
   test-clients:
     runs-on: ubuntu-latest
+    needs: lint
     steps:
     - uses: actions/checkout@v4
     - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
