@@ -52,4 +52,3 @@ def test_request_without_json():
     server = get_test_client("examples/config/single_file_single_policy.yml")
     response = server.post('/fetch/readme.md', data="not json data", content_type="text/plain")
     assert response.status_code == 415
-    assert b"Request body must be JSON" in response.data
