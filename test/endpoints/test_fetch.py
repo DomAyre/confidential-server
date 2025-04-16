@@ -1,14 +1,11 @@
 from argparse import Namespace
-import json
 import os
 from config.parser import parse_config_file
 from encryption_wrapper.src.decrypt import decrypt
-from lib.zip_directory import zip_directory
 from server.run import create_app
 from encryption_wrapper.src.generate_keys import generate_key_pair
 from encryption_wrapper.src.public_key_to_b64 import public_key_to_b64
-import zipfile
-import io
+from encryption_wrapper.src.lib.zip_directory import zip_directory
 
 def get_test_client(config_path):
     return create_app(args=Namespace(
