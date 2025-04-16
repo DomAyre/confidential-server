@@ -32,7 +32,8 @@
 				"files.exclude": {
 					"**/__pycache__": true,
 					"**/.pytest_cache": true,
-					".coverage": true
+					".coverage": true,
+					".ruff_cache": true
 				},
 				"python.testing.pytestArgs": [
 					"test",
