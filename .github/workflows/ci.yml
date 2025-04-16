@@ -41,7 +41,7 @@ jobs:
     - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
     - run: pytest -sv tools/encryption_wrapper/test
 
-  ruff-lint:
+  lint-ruff:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
