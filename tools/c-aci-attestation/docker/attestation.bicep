@@ -25,7 +25,7 @@ resource attestation 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = 
           command: [
             '/bin/bash'
             '-c'
-            'echo hi && sleep 3600'
+            'get_snp_version && get_attestation_ccf'
           ]
         }
       }

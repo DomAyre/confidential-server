@@ -7,7 +7,7 @@
 #include "lib/base64.h"
 
 
-int main(int argc, char* argv[]) {
+int main() {
     if (access("/dev/sev-guest", F_OK) == 0) {
         printf("SNP Version: 6 (SEV Guest)\n");
     } else if (access("/dev/sev", F_OK) == 0) {

@@ -9,12 +9,12 @@ TEST_DIR := test
 CORE_SRCS := $(wildcard $(SRC_DIR)/*.c)
 BINS := $(notdir $(CORE_SRCS:.c=))
 BIN_PATHS := $(addprefix $(BUILD_DIR)/,$(BINS))
-LIB_SRCS := $(SRC_DIR)/lib/snp_report.c $(SRC_DIR)/lib/base64.c
+LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c)
 TEST_BINARY := $(BUILD_DIR)/test_base64_unit
 
 .PHONY: all clean test test_unit $(BINS)
 
-all: $(BIN_PATHS)
+all: clean $(BIN_PATHS)
 
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)

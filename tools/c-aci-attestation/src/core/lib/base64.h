@@ -10,5 +10,10 @@
 // output_length: pointer to size_t to store length of encoded output (excluding null terminator).
 // Returns allocated null-terminated encoded string, or NULL on failure. Caller must free() the returned string.
 char* base64_encode(const uint8_t* data, size_t input_length, size_t* output_length);
+// Decodes Base64-encoded data (no line breaks) into binary.
+// data: pointer to Base64-encoded string; input_length: length of the encoded data.
+// output_length: pointer to size_t to receive decoded byte length.
+// Returns malloc'd buffer with decoded bytes, or NULL on failure. Caller must free().
+uint8_t* base64_decode(const char* data, size_t input_length, size_t* output_length);
 
 #endif // BASE64_H
