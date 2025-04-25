@@ -16,14 +16,24 @@
 			"installDockerComposeSwitch": true,
 			"version": "latest",
 			"dockerDashComposeVersion": "v2"
-		}
+		},
+		"ghcr.io/devcontainers-extra/features/npm-package:1": {
+			"package": "@openai/codex@0.1.2504211509",
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/github-cli:1": {
+			"installDirectlyFromGitHubRelease": true,
+			"version": "latest"
+		},
+		"ghcr.io/devcontainers/features/azure-cli:1": {}
 	},
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"redhat.vscode-yaml",
 				"eamodio.gitlens",
-				"GitHub.vscode-pull-request-github"
+				"GitHub.vscode-pull-request-github",
+				"ms-azuretools.vscode-bicep"
 			],
 			"settings": {
 				"yaml.schemas": {
@@ -44,5 +54,6 @@
 			}
 		}
 	},
-	"postCreateCommand": "pip install -r test/requirements.txt -r tools/**/requirements.txt"
+	"postCreateCommand": "find . -name requirements.txt -exec pip install -r {} \\;",
+	"postStartCommand": "docker buildx create --use --bootstrap"
 }

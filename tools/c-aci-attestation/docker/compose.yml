@@ -1,0 +1,22 @@
+services:
+
+  attestation:
+    image: ghcr.io/domayre/confidential-server/attestation:latest
+    platform: linux/arm64
+    build:
+      platforms:
+        - linux/amd64
+        - linux/arm64
+      context: ..
+      dockerfile_inline: |
+        FROM ubuntu:22.04
+        RUN apt-get update && \
+          apt-get install -y make gcc openssl libssl-dev && \
+          rm -rf /var/lib/apt/lists/*
+        COPY . /src
+        RUN make -C /src clean && make -C /src && cp /src/build/* /usr/local/bin
+    command: |
+      /bin/bash -c '
+        get_snp_version
+        get_attestation_ccf
+      '
