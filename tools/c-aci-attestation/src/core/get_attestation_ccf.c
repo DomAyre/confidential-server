@@ -5,8 +5,18 @@
 #include "lib/snp_report.h"
 #include "lib/base64.h"
 
+int main(int argc, char** argv) {
 
-int main() {
+    // Prepare report_data
+    snp_report_data_t report_data = {0};
+    if (argc > 1 && argv[1]) {
+        size_t input_len = strlen(argv[1]);
+        if (input_len > sizeof(snp_report_data_t)) {
+            fprintf(stderr, "Warning: report_data string too long (%zu > %zu), truncating.\n", input_len, sizeof(snp_report_data_t));
+            input_len = sizeof(snp_report_data_t);
+        }
+        memcpy(report_data, argv[1], input_len);
+    }
 
     // Get the SNP report
     SnpReport* snp_report = malloc(sizeof(SnpReport));
@@ -14,7 +24,6 @@ int main() {
         fprintf(stderr, "Allocation failure\n");
         return 1;
     }
-    snp_report_data_t report_data = {0};
     memset(snp_report, 0, sizeof(SnpReport));
     int ret = get_snp_report(report_data, snp_report);
     if (ret != 0) {
