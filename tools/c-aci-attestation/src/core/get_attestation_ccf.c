@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include "lib/snp_report.h"
+#include "lib/host_amd_certs.h"
 #include "lib/base64.h"
 
 int main(int argc, char** argv) {
@@ -43,8 +44,33 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // Get the Host AMD Certificates JSON, then re-encode in base64
+    char* host_amd_certs_json = get_host_amd_certs();
+    if (!host_amd_certs_json) {
+        fprintf(stderr, "Failed to load host AMD certificates\n");
+        free(snp_report_b64);
+        return 1;
+    }
+    size_t host_amd_certs_b64_len = 0;
+    char* host_amd_certs_b64 = base64_encode(
+        (const uint8_t*)host_amd_certs_json,
+        strlen(host_amd_certs_json),
+        &host_amd_certs_b64_len
+    );
+    free(host_amd_certs_json);
+    if (!host_amd_certs_b64) {
+        fprintf(stderr, "Failed to base64 encode host AMD certificates\n");
+        free(snp_report_b64);
+        return 1;
+    }
+
     // Format the final output JSON
-    printf("{\"evidence\": \"%s\"}\n", snp_report_b64);
+    printf(
+        "{\"evidence\": \"%s\", \"endorsements\": \"%s\"}\n",
+        snp_report_b64,
+        host_amd_certs_b64
+    );
     free(snp_report_b64);
+    free(host_amd_certs_b64);
     return 0;
 }
