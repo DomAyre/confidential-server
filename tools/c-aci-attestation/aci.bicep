@@ -9,7 +9,7 @@ resource attestation 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = 
     sku: 'Confidential'
     restartPolicy: 'Never'
     confidentialComputeProperties: {
-      ccePolicy: ccePolicies.attestation
+      ccePolicy: ccePolicies.aci
     }
     containers: [
       {

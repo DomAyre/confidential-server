@@ -4,7 +4,7 @@ services:
     image: ghcr.io/domayre/confidential-server/attestation:latest
     platform: linux/amd64
     build:
-      context: ..
+      context: .
       dockerfile_inline: |
         FROM ubuntu:22.04
         RUN apt-get update && \
