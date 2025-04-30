@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <stdint.h>
 #include "embedded_examples.h"
-#include "file_utils.h"  // retained for other paths
+#include "files.h"  // retained for other paths
 
 
 static int get_snp_report_sev_guest(uint8_t* report_data, SnpReport* out_report) {
