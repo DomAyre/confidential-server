@@ -51,14 +51,15 @@ int main(int argc, char** argv) {
         free(snp_report_b64);
         return 1;
     }
-    fprintf(stderr, "AMD: %s\n", host_amd_certs_b64);
 
     // Format the final output JSON
     printf(
-        "{\"evidence\": \"%s\", \"endorsements\": \"%s\"}\n",
+        "{\"evidence\": \"%s\", \"endorsements\": \"%s\"}",
         snp_report_b64,
         host_amd_certs_b64
     );
+    // Null terminator for xargs -0
+    putchar('\0');
     free(snp_report_b64);
     return 0;
 }

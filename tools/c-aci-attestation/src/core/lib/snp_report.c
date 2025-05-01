@@ -11,6 +11,11 @@
 #include "embedded_examples.h"
 #include "files.h"  // retained for other paths
 
+#include "hex.h"
+#include <ctype.h>
+#include <stdlib.h>
+#include <stdio.h>
+
 
 static int get_snp_report_sev_guest(uint8_t* report_data, SnpReport* out_report) {
 
@@ -115,4 +120,42 @@ int get_snp_report(uint8_t* report_data, SnpReport* out_report) {
     if (get_snp_report_sev(report_data, out_report) == 0)
         return 0;
     return get_snp_report_virtual(out_report);
+}
+
+// Formats a report_data buffer into a hex (space-separated) string with optional ASCII.
+char* format_report_data(const uint8_t* data, size_t length) {
+    if (!data) return NULL;
+    // Determine printable ASCII length
+    size_t ascii_len = 0;
+    while (ascii_len < length && data[ascii_len] != '\0' && isprint(data[ascii_len])) {
+        ascii_len++;
+    }
+    int printable = ascii_len > 0;
+    // Calculate hex part length: each byte -> 2 hex chars + separator (space or newline) except last
+    size_t hex_chars = length * 2;
+    size_t seps = (length > 0 ? length - 1 : 0);
+    // total hex + separators + optional ascii and parens + null
+    size_t out_len = hex_chars + seps + (printable ? (2 + ascii_len + 1) : 0) + 1;
+    char* out = malloc(out_len);
+    if (!out) return NULL;
+    char* p = out;
+    static const char hex_digits[] = "0123456789abcdef";
+    for (size_t i = 0; i < length; i++) {
+        uint8_t byte = data[i];
+        *p++ = hex_digits[(byte >> 4) & 0xF];
+        *p++ = hex_digits[byte & 0xF];
+        if (i + 1 < length) {
+            if ((i + 1) % 16 == 0) *p++ = '\n';
+            else *p++ = ' ';
+        }
+    }
+    if (printable) {
+        *p++ = '\n';
+        *p++ = '(';
+        memcpy(p, data, ascii_len);
+        p += ascii_len;
+        *p++ = ')';
+    }
+    *p = '\0';
+    return out;
 }

@@ -130,5 +130,10 @@ typedef struct {
 enum SnpType { SNP_TYPE_SEV, SNP_TYPE_SEV_GUEST, SNP_TYPE_NONE };
 
 int get_snp_report(uint8_t* report_data, SnpReport* out_report);
+// Formats a report_data buffer into a hex (space-separated) string with optional ASCII.
+// data: pointer to bytes; length: number of bytes.
+// Returns a malloc'd null-terminated string "xx xx ... (ascii)" or NULL on failure.
+// Caller must free().
+char* format_report_data(const uint8_t* data, size_t length);
 
 #endif // SNP_REPORT_H
