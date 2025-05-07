@@ -4,8 +4,20 @@ on:
   workflow_call:
 
 jobs:
-  test:
+  unit:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
-    - run: make -C tools/c-aci-attestation test
+    - run: make -C tools/c-aci-attestation test_unit
+
+  system:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: make -C tools/c-aci-attestation test_system
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: make -C tools/c-aci-attestation test_docker
