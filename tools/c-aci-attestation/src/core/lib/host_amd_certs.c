@@ -15,7 +15,9 @@ static char* get_host_amd_certs_virtual(void) {
     if (!host_amd_certs_b64) {
         return NULL;
     }
-    memcpy(host_amd_certs_b64, host_amd_certs_b64_start, host_amd_certs_b64_len);
+    for (size_t i = 0; i < host_amd_certs_b64_len; i++) {
+        host_amd_certs_b64[i] = host_amd_certs_b64_start[i];
+    }
     host_amd_certs_b64[host_amd_certs_b64_len] = '\0';
     return host_amd_certs_b64;
 }

@@ -37,7 +37,6 @@ int main(int argc, char** argv) {
     size_t snp_report_b64_len = 0;
     char* snp_report_b64 = base64_encode((const uint8_t*)snp_report, sizeof(SnpReport), &snp_report_b64_len);
     free(snp_report);
-
     if (!snp_report_b64) {
         fprintf(stderr, "Failed to base64 encode\n");
         free(snp_report_b64);
@@ -54,12 +53,14 @@ int main(int argc, char** argv) {
 
     // Format the final output JSON
     printf(
-        "{\"evidence\": \"%s\", \"endorsements\": \"%s\"}",
+        "{\n"
+        "  \"evidence\": \"%s\",\n"
+        "  \"endorsements\": \"%s\"\n"
+        "}",
         snp_report_b64,
         host_amd_certs_b64
     );
-    // Null terminator for xargs -0
-    putchar('\0');
+
     free(snp_report_b64);
     return 0;
 }

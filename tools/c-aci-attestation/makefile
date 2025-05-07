@@ -13,7 +13,7 @@ LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S)
 TEST_BINARY := $(BUILD_DIR)/test_base64_unit
 TEST_BINARIES := $(BUILD_DIR)/test_base64_unit $(BUILD_DIR)/test_hex_unit $(BUILD_DIR)/test_files_unit $(BUILD_DIR)/test_sha256_unit $(BUILD_DIR)/test_json_unit $(BUILD_DIR)/test_cert_chain_unit $(BUILD_DIR)/test_host_amd_certs_unit $(BUILD_DIR)/test_snp_report_unit
 
-.PHONY: all clean test test_unit $(BINS)
+.PHONY: all clean test test_unit lint $(BINS)
 
 all: clean $(BIN_PATHS)
 
@@ -29,7 +29,7 @@ $(BINS): %: $(BUILD_DIR)/%
 test: test_unit test_system test_docker
 	@echo "All tests passed"
 
-test_unit: $(TEST_BINARIES)
+test_unit: clean $(TEST_BINARIES)
 	@$(BUILD_DIR)/test_base64_unit
 	@$(BUILD_DIR)/test_hex_unit
 	@$(BUILD_DIR)/test_files_unit
@@ -39,7 +39,7 @@ test_unit: $(TEST_BINARIES)
 	@$(BUILD_DIR)/test_host_amd_certs_unit
 	@$(BUILD_DIR)/test_snp_report_unit
 
-test_system: $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_ccf
+test_system: clean $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_ccf
 	./build/get_attestation_ccf "example-report-data" \
 		| xargs -0 ./build/verify_attestation_ccf \
 			--report-data "example-report-data" \
@@ -47,6 +47,11 @@ test_system: $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_cc
 
 test_docker:
 	docker compose up --build --abort-on-container-failure
+
+# Static analysis
+lint:
+	@echo "Running clang-tidy over C sources..."
+	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
 
 test_aci:
 	c-aci-testing target run  . \
@@ -58,7 +63,7 @@ $(TEST_BINARY): $(TEST_DIR)/test_base64_unit.c $(SRC_DIR)/lib/base64.c | $(BUILD
 		$(TEST_DIR)/test_base64_unit.c \
 		$(SRC_DIR)/lib/base64.c \
 		$(LDFLAGS)
-  
+
 # Unit tests for other core libraries
 $(BUILD_DIR)/test_hex_unit: $(TEST_DIR)/test_hex_unit.c $(SRC_DIR)/lib/hex.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ \
@@ -90,7 +95,7 @@ $(BUILD_DIR)/test_cert_chain_unit: $(TEST_DIR)/test_cert_chain_unit.c $(SRC_DIR)
 		$(TEST_DIR)/test_cert_chain_unit.c \
 		$(SRC_DIR)/lib/cert_chain.c \
 		$(LDFLAGS)
-  
+
 # Unit test for host_amd_certs
 $(BUILD_DIR)/test_host_amd_certs_unit: $(TEST_DIR)/test_host_amd_certs_unit.c $(SRC_DIR)/lib/host_amd_certs.c $(SRC_DIR)/lib/json.c $(SRC_DIR)/lib/base64.c $(SRC_DIR)/lib/files.c $(SRC_DIR)/lib/embedded_examples.S | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ \

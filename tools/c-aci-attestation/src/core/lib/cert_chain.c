@@ -135,7 +135,9 @@ cert_chain_t* cert_chain_create_from_pem_chain(const char* first_pem,
         size_t len = end - start;
         char* cert = malloc(len + 1);
         if (!cert) break;
-        memcpy(cert, start, len);
+        for (size_t j = 0; j < len; j++) {
+            cert[j] = start[j];
+        }
         cert[len] = '\0';
         arr[idx++] = cert;
         p = end;
@@ -202,7 +204,9 @@ int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain) {
         size_t len = q - start;
         char* cert = malloc(len + 1);
         if (!cert) { ok = 0; break; }
-        memcpy(cert, start, len);
+        for (size_t j = 0; j < len; j++) {
+            cert[j] = start[j];
+        }
         cert[len] = '\0';
         if (!cert_chain_add_pem(chain, cert)) ok = 0;
         free(cert);

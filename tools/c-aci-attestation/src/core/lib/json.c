@@ -13,7 +13,9 @@ char* get_json_field(const char* json, const char* key) {
     size_t len = val_end - val_start;
     char* result = (char*)malloc(len + 1);
     if (!result) return NULL;
-    strncpy(result, val_start, len);
+    for (size_t i = 0; i < len; i++) {
+        result[i] = val_start[i];
+    }
     result[len] = '\0';
     return result;
 }

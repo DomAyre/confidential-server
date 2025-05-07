@@ -12,6 +12,7 @@
 
 int main(int argc, char** argv) {
 
+    // Initialize parameters
     snp_report_data_t report_data = {0};
     char* report_data_str = NULL;
     char* security_policy_b64 = NULL;
@@ -42,8 +43,7 @@ int main(int argc, char** argv) {
     }
 
     // Parse report data string into bytes (truncate if longer than buffer)
-    if (report_data_str)
-    {
+    if (report_data_str) {
         size_t data_len = strlen(report_data_str);
         if (data_len > sizeof(report_data))
             data_len = sizeof(report_data);
@@ -74,32 +74,33 @@ int main(int argc, char** argv) {
     free(endorsements);
 
     // Parse the certificate chain
-    char* vcekCert = get_json_field((char*)endorsements_decoded, "\"vcekCert\"");
-    char* certificateChain = get_json_field((char*)endorsements_decoded, "\"certificateChain\"");
+    char* vcek_cert_pem = get_json_field((char*)endorsements_decoded, "\"vcekCert\"");
+    char* certificate_chain_pem = get_json_field((char*)endorsements_decoded, "\"certificateChain\"");
     free(endorsements_decoded);
-    cert_chain_t* chain = cert_chain_new();
-    if (!chain) {
+    cert_chain_t* certificate_chain = cert_chain_new();
+    if (!certificate_chain) {
         fprintf(stderr, "Failed to create certificate chain object\n");
         return 1;
     }
-    if (!cert_chain_add_pem(chain, vcekCert)) {
+    if (!cert_chain_add_pem(certificate_chain, vcek_cert_pem)) {
         fprintf(stderr, "Failed to add VCEK certificate to chain\n");
-        free(vcekCert);
+        free(vcek_cert_pem);
         return 1;
     }
-    free(vcekCert);
-    if (!cert_chain_add_pem_chain(chain, certificateChain)) {
+    free(vcek_cert_pem);
+    if (!cert_chain_add_pem_chain(certificate_chain, certificate_chain_pem)) {
         fprintf(stderr, "Failed to append certificate chain\n");
-        free(certificateChain);
+        free(certificate_chain_pem);
         return 1;
     }
-    free(certificateChain);
+    free(certificate_chain_pem);
 
-    if (verify_snp_report_is_genuine(&snp_report, chain) != 0) {
-        cert_chain_free(chain);
+    // Run checks
+    if (verify_snp_report_is_genuine(&snp_report, certificate_chain) != 0) {
+        cert_chain_free(certificate_chain);
         return 1;
     }
-    cert_chain_free(chain);
+    cert_chain_free(certificate_chain);
 
     if (verify_snp_report_has_report_data(&snp_report, &report_data) != 0) {
         return 1;
@@ -115,9 +116,9 @@ int main(int argc, char** argv) {
 
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nFinal Results:\n");
-    fprintf(stderr, "\xE2\x9C\x94 SNP Report comes from genuine AMD hardware\n");
-    fprintf(stderr, "\xE2\x9C\x94 SNP Report has the expected report data\n");
-    fprintf(stderr, "\xE2\x9C\x94 SNP Report has the expected security policy\n");
+    fprintf(stderr, "✔ SNP Report comes from genuine AMD hardware\n");
+    fprintf(stderr, "✔ SNP Report has the expected report data\n");
+    fprintf(stderr, "✔ SNP Report has the expected security policy\n");
     fprintf(stderr, "- Host VM build is known to be trusted (TBD)\n");
     fprintf(stderr, "\nAttestation validation successful\n");
     return 0;

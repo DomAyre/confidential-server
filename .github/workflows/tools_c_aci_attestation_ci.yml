@@ -4,6 +4,12 @@ on:
   workflow_call:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: make -C tools/c-aci-attestation lint
+
   unit:
     runs-on: ubuntu-latest
     steps:

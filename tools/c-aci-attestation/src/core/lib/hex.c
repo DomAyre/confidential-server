@@ -40,6 +40,11 @@ uint8_t* hex_decode(const char* hex, size_t input_length, size_t* output_length)
     }
     if (digit_count % 2 != 0) return NULL;
     size_t out_len = digit_count / 2;
+    // Handle empty output: allocate at least one byte so caller can free()
+    if (out_len == 0) {
+        if (output_length) *output_length = 0;
+        return malloc(1);
+    }
     uint8_t* out = malloc(out_len);
     if (!out) return NULL;
     size_t di = 0; // index in hex

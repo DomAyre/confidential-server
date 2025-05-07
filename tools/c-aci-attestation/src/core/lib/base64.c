@@ -29,12 +29,22 @@ uint8_t* base64_decode(const char* data,
                        size_t input_length,
                        size_t* output_length) {
     if (!data) return NULL;
+    // Handle empty input: return an allocatable empty buffer
+    if (input_length == 0) {
+        if (output_length) *output_length = 0;
+        return malloc(1);
+    }
     // Count padding characters '=' at the end
     size_t padding = 0;
     if (input_length >= 1 && data[input_length - 1] == '=') padding++;
     if (input_length >= 2 && data[input_length - 2] == '=') padding++;
     // Calculate maximum decoded length: 3 bytes per 4 Base64 chars
     size_t alloc_len = (input_length / 4) * 3;
+    // Avoid zero-length allocation: return minimal buffer that caller can free
+    if (alloc_len == 0) {
+        if (output_length) *output_length = 0;
+        return malloc(1);
+    }
     unsigned char* decoded = malloc(alloc_len);
     if (!decoded) return NULL;
     // EVP_DecodeBlock decodes input_length bytes and returns length (including padding)
