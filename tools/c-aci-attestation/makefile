@@ -11,6 +11,7 @@ BINS := $(notdir $(CORE_SRCS:.c=))
 BIN_PATHS := $(addprefix $(BUILD_DIR)/,$(BINS))
 LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S)
 TEST_BINARY := $(BUILD_DIR)/test_base64_unit
+TEST_BINARIES := $(BUILD_DIR)/test_base64_unit $(BUILD_DIR)/test_hex_unit $(BUILD_DIR)/test_files_unit $(BUILD_DIR)/test_sha256_unit $(BUILD_DIR)/test_json_unit $(BUILD_DIR)/test_cert_chain_unit $(BUILD_DIR)/test_host_amd_certs_unit $(BUILD_DIR)/test_snp_report_unit
 
 .PHONY: all clean test test_unit $(BINS)
 
@@ -28,8 +29,15 @@ $(BINS): %: $(BUILD_DIR)/%
 test: test_unit test_system test_docker
 	@echo "All tests passed"
 
-test_unit: $(TEST_BINARY)
-	@$(TEST_BINARY)
+test_unit: $(TEST_BINARIES)
+	@$(BUILD_DIR)/test_base64_unit
+	@$(BUILD_DIR)/test_hex_unit
+	@$(BUILD_DIR)/test_files_unit
+	@$(BUILD_DIR)/test_sha256_unit
+	@$(BUILD_DIR)/test_json_unit
+	@$(BUILD_DIR)/test_cert_chain_unit
+	@$(BUILD_DIR)/test_host_amd_certs_unit
+	@$(BUILD_DIR)/test_snp_report_unit
 
 test_system: $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_ccf
 	./build/get_attestation_ccf "example-report-data" \
@@ -45,10 +53,62 @@ test_aci:
 		--policy-type "allow_all" \
 		--deployment-name "test-aci"
 
-$(TEST_BINARY): | $(BUILD_DIR)
+$(TEST_BINARY): $(TEST_DIR)/test_base64_unit.c $(SRC_DIR)/lib/base64.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ \
 		$(TEST_DIR)/test_base64_unit.c \
 		$(SRC_DIR)/lib/base64.c \
+		$(LDFLAGS)
+  
+# Unit tests for other core libraries
+$(BUILD_DIR)/test_hex_unit: $(TEST_DIR)/test_hex_unit.c $(SRC_DIR)/lib/hex.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ \
+		$(TEST_DIR)/test_hex_unit.c \
+		$(SRC_DIR)/lib/hex.c \
+		$(LDFLAGS)
+
+$(BUILD_DIR)/test_files_unit: $(TEST_DIR)/test_files_unit.c $(SRC_DIR)/lib/files.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ \
+		$(TEST_DIR)/test_files_unit.c \
+		$(SRC_DIR)/lib/files.c \
+		$(LDFLAGS)
+
+$(BUILD_DIR)/test_sha256_unit: $(TEST_DIR)/test_sha256_unit.c $(SRC_DIR)/lib/sha256.c $(SRC_DIR)/lib/hex.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ \
+		$(TEST_DIR)/test_sha256_unit.c \
+		$(SRC_DIR)/lib/sha256.c \
+		$(SRC_DIR)/lib/hex.c \
+		$(LDFLAGS)
+
+$(BUILD_DIR)/test_json_unit: $(TEST_DIR)/test_json_unit.c $(SRC_DIR)/lib/json.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ \
+		$(TEST_DIR)/test_json_unit.c \
+		$(SRC_DIR)/lib/json.c \
+		$(LDFLAGS)
+
+$(BUILD_DIR)/test_cert_chain_unit: $(TEST_DIR)/test_cert_chain_unit.c $(SRC_DIR)/lib/cert_chain.c | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ \
+		$(TEST_DIR)/test_cert_chain_unit.c \
+		$(SRC_DIR)/lib/cert_chain.c \
+		$(LDFLAGS)
+  
+# Unit test for host_amd_certs
+$(BUILD_DIR)/test_host_amd_certs_unit: $(TEST_DIR)/test_host_amd_certs_unit.c $(SRC_DIR)/lib/host_amd_certs.c $(SRC_DIR)/lib/json.c $(SRC_DIR)/lib/base64.c $(SRC_DIR)/lib/files.c $(SRC_DIR)/lib/embedded_examples.S | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ \
+		$(TEST_DIR)/test_host_amd_certs_unit.c \
+		$(SRC_DIR)/lib/host_amd_certs.c \
+		$(SRC_DIR)/lib/json.c \
+		$(SRC_DIR)/lib/base64.c \
+		$(SRC_DIR)/lib/files.c \
+		$(SRC_DIR)/lib/embedded_examples.S \
+		$(LDFLAGS)
+
+# Unit test for snp_report
+$(BUILD_DIR)/test_snp_report_unit: $(TEST_DIR)/test_snp_report_unit.c $(SRC_DIR)/lib/snp_report.c $(SRC_DIR)/lib/base64.c $(SRC_DIR)/lib/embedded_examples.S | $(BUILD_DIR)
+	$(CC) $(CFLAGS) -o $@ \
+		$(TEST_DIR)/test_snp_report_unit.c \
+		$(SRC_DIR)/lib/snp_report.c \
+		$(SRC_DIR)/lib/base64.c \
+		$(SRC_DIR)/lib/embedded_examples.S \
 		$(LDFLAGS)
 
 clean:

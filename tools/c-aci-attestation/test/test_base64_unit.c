@@ -145,6 +145,8 @@ static int test_integration(void) {
 }
 
 int main(void) {
+    // Declare test suite
+    printf("=== test_base64_unit ===\n");
     if (test_literals())    return 1;
     if (test_binary())      return 1;
     if (test_integration()) return 1;
