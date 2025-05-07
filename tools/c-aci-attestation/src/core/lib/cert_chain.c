@@ -190,7 +190,6 @@ int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain) {
     char* upem_chain = unescape_json(pem_chain);
     if (!upem_chain) return 0;
     const char* begin_marker = "-----BEGIN CERTIFICATE-----";
-    size_t begin_len = strlen(begin_marker);
     const char* p = upem_chain;
     int ok = 1;
     while ((p = strstr(p, begin_marker))) {

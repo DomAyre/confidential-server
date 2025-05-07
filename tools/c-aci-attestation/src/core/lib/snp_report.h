@@ -64,8 +64,16 @@ enum SNP_MSG_TYPE {
   SNP_MSG_TYPE_MAX
 };
 
+#pragma pack(push, 1)
+typedef struct {
+  uint8_t r[72];
+  uint8_t s[72];
+  uint8_t reserved[512 - 72 - 72];
+} Signature;
+#pragma pack(pop)
 
 /* from SEV-SNP Firmware ABI Specification from Table 21 */
+#pragma pack(push, 1)
 typedef struct {
   uint32_t version;               // version no. of this attestation report.
                                   // Set to 1 for this specification.
@@ -113,9 +121,10 @@ typedef struct {
   uint8_t launch_svn[8];          // The SVN that this guest was launched or
                                   // migrated at
   uint8_t reserved3[168];         // reserved
-  uint8_t signature[512];         // Signature of this attestation report.
+  Signature signature;            // Signature of this attestation report.
                                   // See table 23.
 } SnpReport;
+#pragma pack(pop)
 
 /* from SEV-SNP Firmware ABI Specification Table 22 */
 typedef struct {

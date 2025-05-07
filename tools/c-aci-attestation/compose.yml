@@ -15,5 +15,6 @@ services:
     command: |
       /bin/bash -c '
         get_snp_version
-        get_attestation_ccf
+        echo "$(get_attestation_ccf)"
+        get_attestation_ccf | xargs -0 verify_attestation_ccf --report-data "example-report-data" --security-policy-b64 "$(cat /src/policy_aci.rego | base64 -w 0)"
       '

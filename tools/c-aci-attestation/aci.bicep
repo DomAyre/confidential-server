@@ -25,7 +25,14 @@ resource attestation 'Microsoft.ContainerInstance/containerGroups@2023-05-01' = 
           command: [
             '/bin/bash'
             '-c'
-            'get_snp_version && get_attestation_ccf "example-report-data"'
+            join([
+              'get_snp_version &&'
+              'echo "$(get_attestation_ccf)" &&'
+              'get_attestation_ccf "example-report-data" | xargs -0'
+                'verify_attestation_ccf'
+                  '--report-data "example-report-data"'
+                  '--security-policy-b64 "$(cat /src/policy_aci.rego | base64 -w 0)"'
+            ], ' ')
           ]
         }
       }
