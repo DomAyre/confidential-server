@@ -10,7 +10,6 @@ CORE_SRCS := $(wildcard $(SRC_DIR)/*.c)
 BINS := $(notdir $(CORE_SRCS:.c=))
 BIN_PATHS := $(addprefix $(BUILD_DIR)/,$(BINS))
 LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S)
-TEST_BINARY := $(BUILD_DIR)/test_base64_unit
 TEST_BINARIES := $(BUILD_DIR)/test_base64_unit $(BUILD_DIR)/test_hex_unit $(BUILD_DIR)/test_files_unit $(BUILD_DIR)/test_sha256_unit $(BUILD_DIR)/test_json_unit $(BUILD_DIR)/test_cert_chain_unit $(BUILD_DIR)/test_host_amd_certs_unit $(BUILD_DIR)/test_snp_report_unit
 
 .PHONY: all clean test test_unit lint $(BINS)
@@ -58,7 +57,7 @@ test_aci:
 		--policy-type "allow_all" \
 		--deployment-name "test-aci"
 
-$(TEST_BINARY): $(TEST_DIR)/test_base64_unit.c $(SRC_DIR)/lib/base64.c | $(BUILD_DIR)
+$(BUILD_DIR)/test_base64_unit: $(TEST_DIR)/test_base64_unit.c $(SRC_DIR)/lib/base64.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ \
 		$(TEST_DIR)/test_base64_unit.c \
 		$(SRC_DIR)/lib/base64.c \
@@ -90,10 +89,15 @@ $(BUILD_DIR)/test_json_unit: $(TEST_DIR)/test_json_unit.c $(SRC_DIR)/lib/json.c 
 		$(SRC_DIR)/lib/json.c \
 		$(LDFLAGS)
 
-$(BUILD_DIR)/test_cert_chain_unit: $(TEST_DIR)/test_cert_chain_unit.c $(SRC_DIR)/lib/cert_chain.c | $(BUILD_DIR)
+$(BUILD_DIR)/test_cert_chain_unit: $(TEST_DIR)/test_cert_chain_unit.c $(SRC_DIR)/lib/cert_chain.c $(SRC_DIR)/lib/json.c $(SRC_DIR)/lib/sha256.c $(SRC_DIR)/lib/snp_report.c $(SRC_DIR)/lib/embedded_examples.S $(SRC_DIR)/lib/base64.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ \
 		$(TEST_DIR)/test_cert_chain_unit.c \
 		$(SRC_DIR)/lib/cert_chain.c \
+		$(SRC_DIR)/lib/json.c \
+		$(SRC_DIR)/lib/sha256.c \
+		$(SRC_DIR)/lib/snp_report.c \
+		$(SRC_DIR)/lib/embedded_examples.S \
+		$(SRC_DIR)/lib/base64.c \
 		$(LDFLAGS)
 
 # Unit test for host_amd_certs

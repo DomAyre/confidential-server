@@ -18,7 +18,7 @@ static int test_encode(void) {
     size_t n = sizeof(cases) / sizeof(cases[0]);
     for (size_t i = 0; i < n; i++) {
         size_t out_len = 0;
-        char *out = hex_encode(cases[i].data, cases[i].len, &out_len);
+        char *out = hex_encode(cases[i].data, cases[i].len, 16, &out_len);
         if (!out) {
             fprintf(stderr, "[encode %zu] Allocation failure\n", i);
             return 1;

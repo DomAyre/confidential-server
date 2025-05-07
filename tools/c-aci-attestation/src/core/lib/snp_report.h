@@ -1,6 +1,8 @@
 #include <stdint.h>
 #include <stdbool.h>
 #include <stddef.h>
+#include <sys/ioctl.h>
+#include <openssl/ecdsa.h>
 
 #ifndef SNP_REPORT_H
 #define SNP_REPORT_H
@@ -77,17 +79,14 @@ enum SNP_MSG_TYPE {
 };
 
 
-#pragma pack(push, 1)
 typedef struct {
   uint8_t r[72];
   uint8_t s[72];
   uint8_t reserved[512 - 72 - 72];
 } Signature;
-#pragma pack(pop)
 
 
 /* from SEV-SNP Firmware ABI Specification from Table 21 */
-#pragma pack(push, 1)
 typedef struct {
   uint32_t version;               // version no. of this attestation report.
                                   // Set to 1 for this specification.
@@ -138,7 +137,6 @@ typedef struct {
   Signature signature;            // Signature of this attestation report.
                                   // See table 23.
 } SnpReport;
-#pragma pack(pop)
 
 
 /* from SEV-SNP Firmware ABI Specification Table 22 */
@@ -161,6 +159,12 @@ int get_snp_report(uint8_t* report_data, SnpReport* out_report);
 // Formats raw report data into a human-readable hex string, also prints as a
 // string if the data is compatible.
 char* format_report_data(const uint8_t* data, size_t length);
+
+
+uint8_t* remove_signature(SnpReport* snp_report);
+
+
+ECDSA_SIG* parse_signature(const Signature* signature);
 
 
 #endif // SNP_REPORT_H

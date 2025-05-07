@@ -221,3 +221,47 @@ char* format_report_data(const uint8_t* data, size_t length) {
 
     return output;
 }
+
+
+uint8_t* remove_signature(SnpReport* snp_report) {
+    if (!snp_report) return NULL;
+
+    // Allocate memory for the report without the signature
+    size_t signature_offset = offsetof(SnpReport, signature);
+    uint8_t* report_without_signature = malloc(signature_offset);
+    if (!report_without_signature) return NULL;
+
+    // Copy the report data without the signature
+    memcpy(report_without_signature, snp_report, signature_offset);
+
+    return report_without_signature;
+}
+
+
+ECDSA_SIG* parse_signature(const Signature* signature) {
+
+    BIGNUM* r = BN_lebin2bn(signature->r, 72, NULL);
+    BIGNUM* s = BN_lebin2bn(signature->s, 72, NULL);
+    if (!r || !s) {
+        fprintf(stderr, "✘ Failed to extract r,s from signature\n");
+        if(r) BN_free(r);
+        if(s) BN_free(s);
+        return NULL;
+    }
+
+    ECDSA_SIG* ecdsa_sig = ECDSA_SIG_new();
+    if (!ecdsa_sig) {
+        fprintf(stderr, "✘ Failed to allocate ECDSA_SIG\n");
+        BN_free(r);
+        BN_free(s);
+        return NULL;
+    }
+
+    if (ECDSA_SIG_set0(ecdsa_sig, r, s) != 1) {
+        fprintf(stderr, "✘ Failed to set r and s in ECDSA_SIG\n");
+        ECDSA_SIG_free(ecdsa_sig);
+        return NULL;
+    }
+
+    return ecdsa_sig;
+}

@@ -1,9 +1,12 @@
- #ifndef FILE_UTILS_H
-#define FILE_UTILS_H
+#ifndef FILES_H
+#define FILES_H
 
 // Reads the contents of a file into a null-terminated string.
-// path: path to the file.
-// Returns a malloc'd null-terminated buffer with the file contents, or NULL on failure. Caller must free().
+// Parameters:
+// - path: Path to the file, can be either absolute or relative to process cwd.
+// Returns:
+//   A malloc'd null-terminated buffer with the file contents, or NULL on
+//   failure. Caller must free().
 char* read_file(const char* path);
 
-#endif // FILE_UTILS_H
+#endif // FILES_H

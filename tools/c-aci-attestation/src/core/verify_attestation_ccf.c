@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
 
     // Parse SNP report from input JSON
     SnpReport snp_report = {0};
-    char* evidence = get_json_field(ccf_attestation, "\"evidence\"");
+    char* evidence = get_json_field(ccf_attestation, "evidence");
     uint8_t* snp_report_decoded = base64_decode(evidence, strlen(evidence), NULL);
     free(evidence);
     if (!snp_report_decoded) {
@@ -64,7 +64,7 @@ int main(int argc, char** argv) {
     free(snp_report_decoded);
 
     // Parse the endorsements
-    char* endorsements = get_json_field(ccf_attestation, "\"endorsements\"");
+    char* endorsements = get_json_field(ccf_attestation, "endorsements");
     uint8_t* endorsements_decoded = base64_decode(endorsements, strlen(endorsements), NULL);
     if (!endorsements_decoded) {
         fprintf(stderr, "Failed to decode endorsements\n");
@@ -74,21 +74,21 @@ int main(int argc, char** argv) {
     free(endorsements);
 
     // Parse the certificate chain
-    char* vcek_cert_pem = get_json_field((char*)endorsements_decoded, "\"vcekCert\"");
-    char* certificate_chain_pem = get_json_field((char*)endorsements_decoded, "\"certificateChain\"");
+    char* vcek_cert_pem = get_json_field((char*)endorsements_decoded, "vcekCert");
+    char* certificate_chain_pem = get_json_field((char*)endorsements_decoded, "certificateChain");
     free(endorsements_decoded);
     cert_chain_t* certificate_chain = cert_chain_new();
     if (!certificate_chain) {
         fprintf(stderr, "Failed to create certificate chain object\n");
         return 1;
     }
-    if (!cert_chain_add_pem(certificate_chain, vcek_cert_pem)) {
+    if (cert_chain_add_pem(certificate_chain, vcek_cert_pem) != 0) {
         fprintf(stderr, "Failed to add VCEK certificate to chain\n");
         free(vcek_cert_pem);
         return 1;
     }
     free(vcek_cert_pem);
-    if (!cert_chain_add_pem_chain(certificate_chain, certificate_chain_pem)) {
+    if (cert_chain_add_pem_chain(certificate_chain, certificate_chain_pem) != 0) {
         fprintf(stderr, "Failed to append certificate chain\n");
         free(certificate_chain_pem);
         return 1;

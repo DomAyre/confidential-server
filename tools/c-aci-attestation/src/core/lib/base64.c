@@ -1,65 +1,79 @@
-// base64.c - Wrapper around OpenSSL EVP_EncodeBlock
 #include "base64.h"
 #include <openssl/evp.h>
 #include <stdlib.h>
 
-// Encodes the input data using OpenSSL EVP_EncodeBlock (standard Base64, no line breaks).
-// Returns a malloc'd null-terminated string, or NULL on failure.
-char* base64_encode(const uint8_t* data,
-                     size_t input_length,
-                     size_t* output_length) {
-    // Calculate required output length: 4 * ceil(input_length/3)
-    size_t olen = 4 * ((input_length + 2) / 3);
-    unsigned char* encoded = malloc(olen + 1);
-    if (!encoded) return NULL;
+
+char* base64_encode(
+    const uint8_t* data,
+    size_t input_length,
+    size_t* output_length
+) {
+    if (!data) return NULL;
+
+    // Calculate the output length (allocating if necessary)
+    if (!output_length) {
+        output_length = (size_t*)malloc(sizeof(size_t));
+    }
+    *output_length = 4 * ((input_length + 2) / 3);
+
+    // Allocate space for the Base64-encoded string
+    unsigned char* output = malloc(*output_length + 1);
+    if (!output) return NULL;
+
     // EVP_EncodeBlock writes exactly 4 * ((in_len+2)/3) bytes (no '\0')
-    int written = EVP_EncodeBlock(encoded, data, (int)input_length);
+    int written = EVP_EncodeBlock(output, data, (int)input_length);
     if (written < 0) {
-        free(encoded);
+        free(output);
         return NULL;
     }
+
     // Null-terminate
-    encoded[written] = '\0';
-    if (output_length) *output_length = (size_t)written;
-    return (char*)encoded;
+    output[written] = '\0';
+
+    return (char*)output;
 }
-// Decodes Base64-encoded data using OpenSSL EVP_DecodeBlock.
-// Returns a malloc'd buffer containing the decoded bytes, or NULL on failure.
-uint8_t* base64_decode(const char* data,
-                       size_t input_length,
-                       size_t* output_length) {
+
+
+uint8_t* base64_decode(
+    const char* data,
+    size_t input_length,
+    size_t* output_length
+) {
     if (!data) return NULL;
+
     // Handle empty input: return an allocatable empty buffer
     if (input_length == 0) {
         if (output_length) *output_length = 0;
         return malloc(1);
     }
+
     // Count padding characters '=' at the end
     size_t padding = 0;
-    if (input_length >= 1 && data[input_length - 1] == '=') padding++;
-    if (input_length >= 2 && data[input_length - 2] == '=') padding++;
-    // Calculate maximum decoded length: 3 bytes per 4 Base64 chars
-    size_t alloc_len = (input_length / 4) * 3;
-    // Avoid zero-length allocation: return minimal buffer that caller can free
-    if (alloc_len == 0) {
-        if (output_length) *output_length = 0;
-        return malloc(1);
+    for (size_t i = input_length; i > 0 && data[i - 1] == '='; i--) {
+        padding++;
     }
-    unsigned char* decoded = malloc(alloc_len);
-    if (!decoded) return NULL;
+
+    // Calculate output length: 3 bytes per 4 Base64 chars
+    if (!output_length) {
+        output_length = (size_t*)malloc(sizeof(size_t));
+    }
+    *output_length = (input_length / 4) * 3;
+
+    // Allocate space for the output
+    unsigned char* output = malloc(*output_length);
+    if (!output) return NULL;
+
     // EVP_DecodeBlock decodes input_length bytes and returns length (including padding)
-    int decoded_len = EVP_DecodeBlock(decoded,
-                                      (const unsigned char*)data,
-                                      (int)input_length);
-    if (decoded_len < 0) {
-        free(decoded);
+    int decoded_len = EVP_DecodeBlock(output, (const unsigned char*)data, (int)input_length);
+    if ((size_t)decoded_len != *output_length) {
+        free(output);
         return NULL;
     }
+
     // Adjust length based on padding
     if (padding > 0) {
-        decoded_len -= (int)padding;
-        if (decoded_len < 0) decoded_len = 0;
+        *output_length -= (int)padding;
     }
-    if (output_length) *output_length = (size_t)decoded_len;
-    return decoded;
+
+    return output;
 }
