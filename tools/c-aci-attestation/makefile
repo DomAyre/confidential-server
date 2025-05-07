@@ -25,10 +25,16 @@ $(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR)
 # Phony targets for individual programs
 $(BINS): %: $(BUILD_DIR)/%
 
-test: test_unit
+test: test_unit test_system
 
 test_unit: $(TEST_BINARY)
 	@$(TEST_BINARY)
+
+test_system: $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_ccf
+	./build/get_attestation_ccf "example-report-data" \
+		| xargs -0 ./build/verify_attestation_ccf \
+			--report-data "example-report-data" \
+			--security-policy-b64 "$$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
 
 $(TEST_BINARY): | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ \
