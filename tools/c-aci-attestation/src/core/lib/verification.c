@@ -216,3 +216,13 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
         return 1;
     }
 }
+
+int verify_host_vm_build() {
+    fprintf(stderr, "\n----------------------------------------------------\n");
+    fprintf(stderr, "\nVerifying that the Host VM build is trusted\n");
+    fprintf(stderr, "\nEventually, this will be done by making builds reproducable, and comparing a digest of the VM image. ");
+    fprintf(stderr, "For now, we check that the digest of the build is endorsed by Microsoft\n");
+
+    fprintf(stderr, "\n- To be implemented\n");
+    return 0;
+}

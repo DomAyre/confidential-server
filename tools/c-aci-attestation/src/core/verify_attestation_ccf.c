@@ -109,11 +109,16 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    if (verify_host_vm_build() != 0) {
+        return 1;
+    }
+
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nFinal Results:\n");
     fprintf(stderr, "\xE2\x9C\x94 SNP Report comes from genuine AMD hardware\n");
     fprintf(stderr, "\xE2\x9C\x94 SNP Report has the expected report data\n");
     fprintf(stderr, "\xE2\x9C\x94 SNP Report has the expected security policy\n");
+    fprintf(stderr, "- Host VM build is known to be trusted (TBD)\n");
     fprintf(stderr, "\nAttestation validation successful\n");
     return 0;
 }

@@ -22,6 +22,8 @@ int verify_snp_report_has_report_data(SnpReport* snp_report, snp_report_data_t* 
 // Returns 0 on success, non-zero on failure.
 int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* security_policy_b64);
 
+int verify_host_vm_build();
+
 #ifdef __cplusplus
 }
 #endif
