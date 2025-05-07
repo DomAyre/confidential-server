@@ -50,9 +50,9 @@ int verify_snp_report_is_genuine(SnpReport* snp_report, cert_chain_t* cert_chain
 
     uint8_t* snp_report_without_signature = remove_signature(snp_report);
     if (cert_chain_validate_signature(cert_chain, &snp_report->signature, snp_report_without_signature)) {
-        fprintf(stderr, "✔ SNP report signature valid and comes from the cert chain\n");
+        fprintf(stderr, "✔ SNP report is signed by certificate chain\n");
     } else {
-        fprintf(stderr, "✘ SNP report signature invalid\n");
+        fprintf(stderr, "✘ SNP report isn't signed by the certificate chain\n");
         return 1;
     }
     free(snp_report_without_signature);
@@ -96,7 +96,7 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
         return 1;
     }
 
-    fprintf(stderr, "\nExpected Security Policy: \n%s\n", security_policy);
+    fprintf(stderr, "\nExpected Security Policy: \n%s\n", (char*)security_policy);
 
     uint8_t* policy_hash = sha256(security_policy, policy_len);
     free(security_policy);
