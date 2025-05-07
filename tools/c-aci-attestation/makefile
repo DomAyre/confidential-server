@@ -25,7 +25,8 @@ $(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR)
 # Phony targets for individual programs
 $(BINS): %: $(BUILD_DIR)/%
 
-test: test_unit test_system
+test: test_unit test_system test_docker
+	@echo "All tests passed"
 
 test_unit: $(TEST_BINARY)
 	@$(TEST_BINARY)
@@ -35,6 +36,14 @@ test_system: $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_cc
 		| xargs -0 ./build/verify_attestation_ccf \
 			--report-data "example-report-data" \
 			--security-policy-b64 "$$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
+
+test_docker:
+	docker compose up --build --abort-on-container-failure
+
+test_aci:
+	c-aci-testing target run  . \
+		--policy-type "allow_all" \
+		--deployment-name "test-aci"
 
 $(TEST_BINARY): | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ \
