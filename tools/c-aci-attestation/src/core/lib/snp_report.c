@@ -4,9 +4,6 @@
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
-#ifndef O_CLOEXEC
-#define O_CLOEXEC 0
-#endif
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <errno.h>
@@ -27,6 +24,7 @@ static int get_snp_report_sev_guest(uint8_t* report_data, SnpReport* out_report)
 
     // Create SNP Request
     SnpRequest snp_request = {0};
+
     // Copy report_data into request
     for (size_t i = 0; i < sizeof(snp_request.report_data); i++) {
         snp_request.report_data[i] = report_data[i];
@@ -73,6 +71,7 @@ static int get_snp_report_sev_guest(uint8_t* report_data, SnpReport* out_report)
     close(fd);
     return 0;
 }
+
 
 static int get_snp_report_sev(uint8_t* report_data, SnpReport* out_report) {
     int fd = open("/dev/sev", O_RDWR | O_CLOEXEC);
@@ -131,6 +130,7 @@ static int get_snp_report_sev(uint8_t* report_data, SnpReport* out_report) {
     return 0;
 }
 
+
 static int get_snp_report_virtual(SnpReport* out_report) {
     size_t b64_len = snp_report_b64_end - snp_report_b64_start;
     size_t raw_len = 0;
@@ -157,6 +157,7 @@ static int get_snp_report_virtual(SnpReport* out_report) {
     return 0;
 }
 
+
 int get_snp_report(uint8_t* report_data, SnpReport* out_report) {
     if (!out_report) return -1;
 
@@ -170,42 +171,53 @@ int get_snp_report(uint8_t* report_data, SnpReport* out_report) {
     return get_snp_report_virtual(out_report);
 }
 
-// Formats a report_data buffer into a hex (space-separated) string with optional ASCII.
+
 char* format_report_data(const uint8_t* data, size_t length) {
     if (!data) return NULL;
-    // Determine printable ASCII length
+
+    // Determine printable ASCII length and if the data is ASCII
     size_t ascii_len = 0;
     while (ascii_len < length && data[ascii_len] != '\0' && isprint(data[ascii_len])) {
         ascii_len++;
     }
-    int printable = ascii_len > 0;
-    // Calculate hex part length: each byte -> 2 hex chars + separator (space or newline) except last
-    size_t hex_chars = length * 2;
-    size_t seps = (length > 0 ? length - 1 : 0);
-    // total hex + separators + optional ascii and parens + null
-    size_t out_len = hex_chars + seps + (printable ? (2 + ascii_len + 1) : 0) + 1;
-    char* out = malloc(out_len);
-    if (!out) return NULL;
-    char* p = out;
+    bool is_ascii = ascii_len > 0;
+
+    // Construct the length of the output string
+    size_t output_len = 0;
+    output_len += length * 2;                     // 2 hex chars per byte
+    output_len += (length > 0 ? length - 1 : 0);  // 1 space or newline per byte
+    if (is_ascii) output_len += ascii_len + 1;    // ASCII length plus parenthesis'
+    output_len += 1;                              // null terminator
+
+    // Allocate the output string
+    char* output = malloc(output_len);
+    if (!output) return NULL;
+    char* output_ptr = output;
+
+    // Print the hex data
     static const char hex_digits[] = "0123456789abcdef";
+    static const size_t bytes_per_line = 16;
     for (size_t i = 0; i < length; i++) {
         uint8_t byte = data[i];
-        *p++ = hex_digits[(byte >> 4) & 0xF];
-        *p++ = hex_digits[byte & 0xF];
+        *output_ptr++ = hex_digits[(byte >> 4) & 0xF];
+        *output_ptr++ = hex_digits[byte & 0xF];
         if (i + 1 < length) {
-            if ((i + 1) % 16 == 0) *p++ = '\n';
-            else *p++ = ' ';
+            if ((i + 1) % bytes_per_line == 0) *output_ptr++ = '\n';
+            else *output_ptr++ = ' ';
         }
     }
-    if (printable) {
-        *p++ = '\n';
-        *p++ = '(';
-        // Copy ASCII portion
+
+    // Print the ASCII data if applicable
+    if (is_ascii) {
+        *output_ptr++ = '\n';
+        *output_ptr++ = '(';
         for (size_t i = 0; i < ascii_len; i++) {
-            *p++ = data[i];
+            *output_ptr++ = data[i];
         }
-        *p++ = ')';
+        *output_ptr++ = ')';
     }
-    *p = '\0';
-    return out;
+
+    *output_ptr = '\0';  // Null-terminate the string
+
+    return output;
 }

@@ -5,7 +5,13 @@
 #ifndef SNP_REPORT_H
 #define SNP_REPORT_H
 
+
+// Data structures are based on SEV-SNP Firmware ABI Specification
+// https://www.amd.com/en/support/tech-docs/sev-secure-nested-paging-firmware-abi-specification
+
+
 typedef uint8_t snp_report_data_t[64];
+
 
 typedef struct {
   uint8_t req_msg_type;
@@ -15,9 +21,11 @@ typedef struct {
   uint64_t request_uaddr;
   uint16_t response_len;
   uint64_t response_uaddr;
-  uint32_t error;    /* firmware error code on failure (see psp-sev.h) */
+  uint32_t error;           // firmware error code on failure (see psp-sev.h)
 } SevIoctlRequest;
 
+
+// SEV-SNP Guest Request (sev-snp driver include/uapi/linux/psp-sev-guest.h)
 typedef struct {
   uint8_t msg_version;
   uint64_t req_data;
@@ -25,11 +33,13 @@ typedef struct {
   uint64_t fw_err;
 } SevGuestIoctlRequest;
 
+
 typedef struct {
-  /* response data, see SEV-SNP spec for the format */
-  uint8_t data[4000];
+  uint8_t data[4000];       // response data, see SEV-SNP spec for the format
 } SnpIoctlResponse;
 
+
+// SEV-SNP IOCTL commands
 #define SNP_GUEST_REQ_IOC_TYPE        'S'
 #define SEV_GET_REPORT                _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x0, struct SevIoctlRequest)
 #define SEV_GET_DERIVED_KEY           _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x1, struct SevIoctlRequest)
@@ -38,12 +48,14 @@ typedef struct {
 #define SEV_GUEST_GET_DERIVED_KEY     _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x1, SevGuestIoctlRequest)
 #define SEV_GUEST_GET_EXT_REPORT      _IOWR(SNP_GUEST_REQ_IOC_TYPE, 0x2, SevGuestIoctlRequest)
 
+
 // from SEV-SNP Firmware ABI Specification Table 20
 typedef struct {
   snp_report_data_t report_data;
   uint32_t vmpl;
   uint8_t reserved[28];
 } SnpRequest;
+
 
 enum SNP_MSG_TYPE {
   SNP_MSG_TYPE_INVALID = 0,
@@ -64,6 +76,7 @@ enum SNP_MSG_TYPE {
   SNP_MSG_TYPE_MAX
 };
 
+
 #pragma pack(push, 1)
 typedef struct {
   uint8_t r[72];
@@ -71,6 +84,7 @@ typedef struct {
   uint8_t reserved[512 - 72 - 72];
 } Signature;
 #pragma pack(pop)
+
 
 /* from SEV-SNP Firmware ABI Specification from Table 21 */
 #pragma pack(push, 1)
@@ -126,6 +140,7 @@ typedef struct {
 } SnpReport;
 #pragma pack(pop)
 
+
 /* from SEV-SNP Firmware ABI Specification Table 22 */
 typedef struct {
   uint32_t status;
@@ -136,10 +151,16 @@ typedef struct {
                         // (i.e., 1280 bytes)
 } SnpResponse;
 
-enum SnpType { SNP_TYPE_SEV, SNP_TYPE_SEV_GUEST, SNP_TYPE_NONE };
 
+// If running on an SEV-SNP machine, call the IOCTL and parse the output into an
+// SNP report. If running elsewhere, return a sample "allow_all" SNP report
+// based on the files in examples/
 int get_snp_report(uint8_t* report_data, SnpReport* out_report);
 
+
+// Formats raw report data into a human-readable hex string, also prints as a
+// string if the data is compatible.
 char* format_report_data(const uint8_t* data, size_t length);
+
 
 #endif // SNP_REPORT_H
