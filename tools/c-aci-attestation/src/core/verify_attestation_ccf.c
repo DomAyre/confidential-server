@@ -1,4 +1,3 @@
-#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdint.h>
@@ -7,6 +6,7 @@
 #include "lib/base64.h"
 #include "lib/json.h"
 #include "lib/cert_chain.h"
+#include "lib/verification.h"
 #include <openssl/stack.h>
 #include <openssl/evp.h>
 
@@ -41,8 +41,14 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Parse report data string into bytes
-    memcpy(report_data, report_data_str, fmin(strlen(report_data_str), sizeof(report_data)));
+    // Parse report data string into bytes (truncate if longer than buffer)
+    if (report_data_str)
+    {
+        size_t data_len = strlen(report_data_str);
+        if (data_len > sizeof(report_data))
+            data_len = sizeof(report_data);
+        memcpy(report_data, report_data_str, data_len);
+    }
 
     // Parse SNP report from input JSON
     SnpReport snp_report = {0};
@@ -59,7 +65,7 @@ int main(int argc, char** argv) {
 
     // Parse the endorsements
     char* endorsements = get_json_field(ccf_attestation, "\"endorsements\"");
-    char* endorsements_decoded = base64_decode(endorsements, strlen(endorsements), NULL);
+    uint8_t* endorsements_decoded = base64_decode(endorsements, strlen(endorsements), NULL);
     if (!endorsements_decoded) {
         fprintf(stderr, "Failed to decode endorsements\n");
         free(endorsements);
@@ -68,8 +74,8 @@ int main(int argc, char** argv) {
     free(endorsements);
 
     // Parse the certificate chain
-    char* vcekCert = get_json_field(endorsements_decoded, "\"vcekCert\"");
-    char* certificateChain = get_json_field(endorsements_decoded, "\"certificateChain\"");
+    char* vcekCert = get_json_field((char*)endorsements_decoded, "\"vcekCert\"");
+    char* certificateChain = get_json_field((char*)endorsements_decoded, "\"certificateChain\"");
     free(endorsements_decoded);
     cert_chain_t* chain = cert_chain_new();
     if (!chain) {

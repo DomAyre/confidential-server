@@ -124,18 +124,29 @@ int verify_snp_report_is_genuine(SnpReport* snp_report, cert_chain_t* cert_chain
     }
 
     // 6. Actually verify the signature using VCEK public key
+    // Wrap OpenSSL 3.0 deprecated functions
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     // Get EC_KEY from EVP_PKEY
     EC_KEY* ec_key = EVP_PKEY_get1_EC_KEY(vcek_pubkey);
+#pragma GCC diagnostic pop
     if (!ec_key) {
         fprintf(stderr, "✘ Could not extract EC_KEY from VCEK public key\n");
         ECDSA_SIG_free(ecdsa_sig);
         EVP_PKEY_free(vcek_pubkey);
         return 1;
     }
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     int verify_ok = ECDSA_do_verify(digest, 48, ecdsa_sig, ec_key);
+#pragma GCC diagnostic pop
 
     ECDSA_SIG_free(ecdsa_sig);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
     EC_KEY_free(ec_key);
+#pragma GCC diagnostic pop
     EVP_PKEY_free(vcek_pubkey);
 
     if (verify_ok == 1) {

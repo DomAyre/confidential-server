@@ -4,6 +4,9 @@
 #include <string.h>
 #include <stdio.h>
 #include <fcntl.h>
+#ifndef O_CLOEXEC
+#define O_CLOEXEC 0
+#endif
 #include <unistd.h>
 #include <sys/ioctl.h>
 #include <errno.h>

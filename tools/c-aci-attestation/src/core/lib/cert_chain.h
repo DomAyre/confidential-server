@@ -56,15 +56,6 @@ int cert_chain_validate_root(const cert_chain_t* chain, EVP_PKEY* trusted_root_p
 // Placeholder for the PEM-encoded trusted root public key.
 // Set this to the appropriate PEM string before calling cert_chain_validate_root().
 extern const char* cert_chain_trusted_root_pubkey_pem;
-// Creates a new, empty certificate chain. Returns NULL on failure.
-// Caller must free with cert_chain_free().
-cert_chain_t* cert_chain_new(void);
-// Adds a single PEM certificate (possibly JSON-escaped) to an existing chain.
-// Returns 1 on success, 0 on failure.
-int cert_chain_add_pem(cert_chain_t* chain, const char* pem);
-// Parses one or more PEM certificates concatenated (possibly JSON-escaped) and adds
-// them to the existing chain. Returns 1 if all were added successfully, 0 otherwise.
-int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain);
 
 #ifdef __cplusplus
 }
