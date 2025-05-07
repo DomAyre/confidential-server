@@ -53,4 +53,7 @@ jobs:
     - run: pytest --cov=src --cov-fail-under=90 test
 
   encryption-wrapper:
-    uses: ./.github/workflows/encryption_wrapper_ci.yml
+    uses: ./.github/workflows/tools_encryption_wrapper_ci.yml
+
+  c-aci-attestation:
+    uses: ./.github/workflows/tools_c_aci_attestation_ci.yml
