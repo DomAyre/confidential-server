@@ -50,6 +50,15 @@ You can also run the verification code against a generated report, just ensure t
         --security-policy-b64 "$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
 ```
 
+### Python package
+
+```
+python -m attestation.get_attestation_ccf "example-report-data" \
+    | xargs -0 python -m attestation.verify_attestation_ccf \
+        --report-data "example-report-data" \
+        --security-policy-b64 "$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
+```
+
 ## Contributing
 
 When making changes, you can verify them with:

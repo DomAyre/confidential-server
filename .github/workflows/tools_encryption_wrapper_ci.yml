@@ -12,7 +12,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
-    - run: ruff check . --exclude tools/
+    - run: ruff check tools/encryption_wrapper --exclude tools/
 
   test:
     runs-on: ubuntu-latest

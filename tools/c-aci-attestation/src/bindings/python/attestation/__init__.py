@@ -21,11 +21,19 @@ def _locate_exec(name: str) -> str:
     path = shutil.which(name)
     if path:
         return path
-    # 3) in project build/ directory (dev mode)
-    build_path = os.path.join(os.getcwd(), 'build', name)
-    if os.path.isfile(build_path) and os.access(build_path, os.X_OK):
-        return build_path
-    raise FileNotFoundError(f"Executable '{name}' not found in {candidate}, PATH, or ./build/")
+    # 3) in project build/ directory relative to this module (dev mode)
+    p = _pkg_dir
+    while True:
+        build_path = os.path.join(p, 'build', name)
+        if os.path.isfile(build_path) and os.access(build_path, os.X_OK):
+            return build_path
+        parent = os.path.dirname(p)
+        if parent == p:
+            break
+        p = parent
+    raise FileNotFoundError(
+        f"Executable '{name}' not found in {candidate}, PATH, or project build directory"
+    )
 
 _exe_get_att = _locate_exec('get_attestation_ccf')
 _exe_verify = _locate_exec('verify_attestation_ccf')
@@ -60,12 +68,13 @@ def verify_attestation_ccf(ccf_attestation: str, report_data: str = '', security
     :returns: True if verification succeeds, False otherwise.
     """
     args = [_exe_verify]
+    args.append(ccf_attestation)
     if report_data:
         args.extend(['--report-data', report_data])
     if security_policy_b64:
         args.extend(['--security-policy-b64', security_policy_b64])
-    args.append(ccf_attestation)
-    result = subprocess.run(args, capture_output=True, text=True)
+
+    result = subprocess.run(args)
     return result.returncode == 0
 
 def get_snp_version() -> str:
