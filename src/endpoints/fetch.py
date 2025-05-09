@@ -1,15 +1,27 @@
 import os
+import base64
 from config.parser import ServerConfig
 from flask import jsonify
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from encryption_wrapper.src.encrypt import encrypt
 from encryption_wrapper.src.lib.zip_directory import zip_directory
+from attestation import verify_attestation_ccf
 
-def fetch(config: ServerConfig, target: str, wrapping_key: rsa.RSAPublicKey):
+def fetch(config: ServerConfig, target: str, attestation: str, wrapping_key: rsa.RSAPublicKey):
 
     project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
     absolute_target = os.path.join(project_root, target)
+
+    try:
+        if not verify_attestation_ccf(
+            ccf_attestation=attestation,
+            report_data="example-report-data",
+            security_policy_b64=list(config.security_policies.items())[0][1],
+        ):
+            return "Invalid attestation.", 403
+    except Exception:
+        return "Invalid attestation encoding.", 400
 
     # Ensure target is an actual file or directory and defined in the server
     # configuration. The application shouldn't distinguish between files which

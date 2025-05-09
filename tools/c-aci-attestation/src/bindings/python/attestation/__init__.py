@@ -68,12 +68,13 @@ def verify_attestation_ccf(ccf_attestation: str, report_data: str = '', security
     :returns: True if verification succeeds, False otherwise.
     """
     args = [_exe_verify]
+    args.append(ccf_attestation)
     if report_data:
         args.extend(['--report-data', report_data])
     if security_policy_b64:
         args.extend(['--security-policy-b64', security_policy_b64])
-    args.append(ccf_attestation)
-    result = subprocess.run(args, capture_output=True, text=True)
+
+    result = subprocess.run(args)
     return result.returncode == 0
 
 def get_snp_version() -> str:

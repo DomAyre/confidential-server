@@ -47,14 +47,12 @@ Call the `/fetch` endpoint followed by a path which must match a path in your co
 curl \
   -X POST \
   -H "Content-Type: application/json" \
-  -d "{\"wrapping_key\": \"$(python tools/encryption_wrapper/src/public_key_to_b64.py)\"}" \
-  http://localhost:5000/fetch/readme.md
-```
-
-to decrypt the result, add:
-
-```
-| xargs -0 python tools/encryption_wrapper/src/decrypt.py
+  -d '{
+    "attestation": "'$(python3 -m attestation.get_attestation_ccf | base64 -w 0)'",
+    "wrapping_key": "'$(python tools/encryption_wrapper/src/public_key_to_b64.py)'"
+  }' \
+  http://localhost:5000/fetch/readme.md \
+    | xargs -0 python tools/encryption_wrapper/src/decrypt.py
 ```
 
 Call `/fetch` for a directory and unzip it
@@ -63,7 +61,10 @@ Call `/fetch` for a directory and unzip it
 curl \
   -X POST \
   -H "Content-Type: application/json" \
-  -d "{\"wrapping_key\": \"$(python tools/encryption_wrapper/src/public_key_to_b64.py)\"}" \
+  -d '{
+    "attestation": "'$(python3 -m attestation.get_attestation_ccf | base64 -w 0)'",
+    "wrapping_key": "'$(python tools/encryption_wrapper/src/public_key_to_b64.py)'"
+  }' \
   http://localhost:5000/fetch/examples \
   | xargs -0 python tools/encryption_wrapper/src/decrypt.py \
     --out examples.zip
