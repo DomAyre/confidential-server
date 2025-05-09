@@ -18,9 +18,10 @@ def create_app(args):
         attestation_b64 = request.json.get('attestation')
         if attestation_b64 is None:
             return "Missing attestation.", 400
-        attestation = b64decode(attestation_b64).decode()
-        if attestation is None:
-            return "Attestation isn't valid base64", 403
+        try:
+            attestation = b64decode(attestation_b64).decode()
+        except (binascii.Error, UnicodeDecodeError):
+            return "Invalid base64 attestation", 403
 
         return _fetch(
             config,
