@@ -12,9 +12,15 @@ BIN_PATHS := $(addprefix $(BUILD_DIR)/,$(BINS))
 LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S)
 TEST_BINARIES := $(BUILD_DIR)/test_base64_unit $(BUILD_DIR)/test_hex_unit $(BUILD_DIR)/test_files_unit $(BUILD_DIR)/test_sha256_unit $(BUILD_DIR)/test_json_unit $(BUILD_DIR)/test_cert_chain_unit $(BUILD_DIR)/test_host_amd_certs_unit $(BUILD_DIR)/test_snp_report_unit
 
-.PHONY: all clean test test_unit lint $(BINS)
+.PHONY: all clean test test_unit test_python lint $(BINS)
 
 all: clean $(BIN_PATHS)
+
+docker:
+	@docker compose build
+
+python:
+	@(cd src/bindings/python/ && python3 -m pip install -e .)
 
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
@@ -25,7 +31,7 @@ $(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR)
 # Phony targets for individual programs
 $(BINS): %: $(BUILD_DIR)/%
 
-test: test_unit test_system test_docker
+test: test_unit test_system test_python test_docker
 	@echo "All tests passed"
 
 test_unit: clean $(TEST_BINARIES)
@@ -44,8 +50,12 @@ test_system: clean $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestat
 			--report-data "example-report-data" \
 			--security-policy-b64 "$$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
 
-test_docker:
+test_docker: all docker
 	docker compose up --build --abort-on-container-failure
+
+test_python: all python
+	@echo "Running Python pytest suite..."
+	pytest -q src/bindings/python/tests
 
 # Static analysis
 lint:
