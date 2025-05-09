@@ -55,7 +55,8 @@ test_docker: all docker
 
 test_python: all python
 	@echo "Running Python pytest suite..."
-	pytest -q src/bindings/python/tests
+	pip install -r test/python/requirements.txt
+	pytest -q test/python
 
 # Static analysis
 lint:
