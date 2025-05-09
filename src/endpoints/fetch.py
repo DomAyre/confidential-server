@@ -1,5 +1,4 @@
 import os
-import base64
 from config.parser import ServerConfig
 from flask import jsonify
 from cryptography.hazmat.primitives.asymmetric import rsa

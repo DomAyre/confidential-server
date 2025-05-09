@@ -113,3 +113,7 @@ pytest
 ### Linting
 
 Linting is done with [ruff](https://github.com/astral-sh/ruff)
+
+```
+ruff check . --exclude tools/
+```
