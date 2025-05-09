@@ -1,0 +1,9 @@
+# Ignore Python packaging and build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+# Cache and compiled files
+__pycache__/
+*.py[cod]
+*.so
