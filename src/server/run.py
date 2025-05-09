@@ -1,4 +1,5 @@
 from base64 import b64decode
+import binascii
 from typing import cast
 from flask import Flask, request
 from config.parser import ServerConfig
