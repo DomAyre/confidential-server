@@ -15,3 +15,9 @@ host_amd_certs_b64_start:
     .incbin "examples/host-amd-certs-base64"
 .global host_amd_certs_b64_end
 host_amd_certs_b64_end:
+// Embed UVM reference endorsements for virtual mode
+.global reference_info_b64_start
+reference_info_b64_start:
+    .incbin "examples/reference-info-base64"
+.global reference_info_b64_end
+reference_info_b64_end:
