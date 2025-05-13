@@ -1,5 +1,11 @@
+DEPS_DIR := tools/cose-deps
+TCOSE_DIR := $(DEPS_DIR)/t_cose
+QCBOR_DIR := $(DEPS_DIR)/qcbor
 CC := gcc
-CFLAGS := -Wall -Wextra -O2 -Isrc/core
+CFLAGS := -Wall -Wextra -O2 -Isrc/core \
+          -I$(TCOSE_DIR)/inc -I$(TCOSE_DIR)/src \
+          -I$(QCBOR_DIR)/inc \
+          -DT_COSE_USE_OPENSSL_CRYPTO=1
 LDFLAGS := -lcrypto -lm
 
 BUILD_DIR := build
@@ -9,12 +15,23 @@ TEST_DIR := test
 CORE_SRCS := $(wildcard $(SRC_DIR)/*.c)
 BINS := $(notdir $(CORE_SRCS:.c=))
 BIN_PATHS := $(addprefix $(BUILD_DIR)/,$(BINS))
-LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S)
+COSE_SRCS := \
+    $(TCOSE_DIR)/src/t_cose_sign1_verify.c \
+    $(TCOSE_DIR)/src/t_cose_util.c \
+    $(TCOSE_DIR)/src/t_cose_parameters.c \
+    $(TCOSE_DIR)/src/t_cose_short_circuit.c \
+    $(TCOSE_DIR)/crypto_adapters/t_cose_openssl_crypto.c \
+    $(QCBOR_DIR)/src/qcbor_decode.c \
+    $(QCBOR_DIR)/src/qcbor_encode.c \
+    $(QCBOR_DIR)/src/UsefulBuf.c \
+    $(QCBOR_DIR)/src/ieee754.c
+LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S) $(COSE_SRCS)
 TEST_BINARIES := $(BUILD_DIR)/test_base64_unit $(BUILD_DIR)/test_hex_unit $(BUILD_DIR)/test_files_unit $(BUILD_DIR)/test_sha256_unit $(BUILD_DIR)/test_json_unit $(BUILD_DIR)/test_cert_chain_unit $(BUILD_DIR)/test_host_amd_certs_unit $(BUILD_DIR)/test_snp_report_unit
 
-.PHONY: all clean test test_unit test_python lint $(BINS)
+DEPS := deps
+.PHONY: all clean test test_unit test_python lint $(BINS) $(DEPS)
 
-all: clean $(BIN_PATHS)
+all: $(DEPS) clean $(BIN_PATHS)
 
 docker:
 	@docker compose build
@@ -25,7 +42,7 @@ python:
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR)
+$(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR) $(DEPS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
 # Phony targets for individual programs
@@ -64,9 +81,16 @@ lint:
 	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
 
 test_aci:
-	c-aci-testing target run  . \
+	c-aci-testing target run . \
 		--policy-type "allow_all" \
 		--deployment-name "test-aci"
+ 
+deps:
+	@mkdir -p $(DEPS_DIR)
+	@echo "Fetching t_cose into $(TCOSE_DIR)..."
+	@if [ ! -d "$(TCOSE_DIR)" ]; then git clone --recursive https://github.com/laurencelundblade/t_cose.git $(TCOSE_DIR); fi
+	@echo "Fetching QCBOR into $(QCBOR_DIR)..."
+	@if [ ! -d "$(QCBOR_DIR)" ]; then git clone https://github.com/laurencelundblade/qcbor.git $(QCBOR_DIR); fi
 
 $(BUILD_DIR)/test_base64_unit: $(TEST_DIR)/test_base64_unit.c $(SRC_DIR)/lib/base64.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -o $@ \

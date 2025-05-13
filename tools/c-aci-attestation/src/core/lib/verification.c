@@ -9,6 +9,8 @@
 #include "base64.h"
 #include "sha256.h"
 #include "hex.h"
+#include "cose.h"
+#include <unistd.h>
 
 const char* amd_public_key_pem =
     "-----BEGIN PUBLIC KEY-----\n"
@@ -119,12 +121,12 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
     }
 }
 
-int verify_host_vm_build() {
+/**
+ * Verify that uvm_endorsements is a valid COSE_Sign1 message.
+ * buf/len is the COSE_Sign1 message buffer.
+ */
+int verify_host_vm_build(const uint8_t* buf, size_t len) {
     fprintf(stderr, "\n----------------------------------------------------\n");
-    fprintf(stderr, "\nVerifying that the Host VM build is trusted\n");
-    fprintf(stderr, "\nEventually, this will be done by making builds reproducable, and comparing a digest of the VM image. ");
-    fprintf(stderr, "For now, we check that the digest of the build is endorsed by Microsoft\n");
-
-    fprintf(stderr, "\n- To be implemented\n");
-    return 0;
+    fprintf(stderr, "\nVerifying uvm_endorsements is valid COSE_Sign1 structure\n");
+    return cose_verify_sign1(buf, len);
 }

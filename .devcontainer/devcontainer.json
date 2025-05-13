@@ -31,6 +31,12 @@
 			"preserve_apt_list": true,
 			"packages": "clang-tidy",
 			"ppas": "ppa:deadsnakes/ppa"
+		},
+		"ghcr.io/devcontainers-extra/features/apt-get-packages:1": {
+			"clean_ppas": true,
+			"preserve_apt_list": true,
+			"packages": "clang-tidy",
+			"ppas": "ppa:deadsnakes/ppa"
 		}
 	},
 	"customizations": {

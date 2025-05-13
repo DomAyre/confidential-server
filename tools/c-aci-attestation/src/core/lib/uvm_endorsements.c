@@ -32,5 +32,6 @@ static char* get_uvm_endorsements_virtual(void) {
 char* get_uvm_endorsements(void) {
     char* r = get_uvm_endorsements_aci();
     if (r) return r;
+    // Fallback to embedded example
     return get_uvm_endorsements_virtual();
 }

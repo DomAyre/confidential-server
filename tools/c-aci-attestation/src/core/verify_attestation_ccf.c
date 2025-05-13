@@ -8,6 +8,7 @@
 #include "lib/cert_chain.h"
 #include "lib/verification.h"
 #include <openssl/stack.h>
+#include <ctype.h>
 #include <openssl/evp.h>
 
 int main(int argc, char** argv) {
@@ -110,9 +111,31 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (verify_host_vm_build() != 0) {
+    // Parse the host VM build COSE from uvm_endorsements
+    // Extract uvm_endorsements base64 from attestation JSON
+    char* uvm_endorsements_b64 = get_json_field(ccf_attestation, "uvm_endorsements");
+    if (!uvm_endorsements_b64) {
+        fprintf(stderr, "✘ Missing uvm_endorsements in attestation JSON\n");
         return 1;
     }
+    // Trim whitespace
+    char* p = uvm_endorsements_b64;
+    while (*p && isspace((unsigned char)*p)) p++;
+    char* end = uvm_endorsements_b64 + strlen(uvm_endorsements_b64);
+    while (end > p && isspace((unsigned char)*(end - 1))) end--;
+    size_t trim_len = end - p;
+    size_t cose_len = 0;
+    uint8_t* cose_buf = base64_decode(p, trim_len, &cose_len);
+    free(uvm_endorsements_b64);
+    if (!cose_buf) {
+        fprintf(stderr, "✘ Failed to decode uvm_endorsements base64\n");
+        return 1;
+    }
+    if (verify_host_vm_build(cose_buf, cose_len) != 0) {
+        free(cose_buf);
+        return 1;
+    }
+    free(cose_buf);
 
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nFinal Results:\n");
