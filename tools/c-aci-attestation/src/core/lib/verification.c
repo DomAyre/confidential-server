@@ -96,7 +96,9 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
         return 1;
     }
 
-    fprintf(stderr, "\nExpected Security Policy: \n%s\n", (char*)security_policy);
+    fprintf(stderr, "\nExpected Security Policy: \n");
+    fwrite(security_policy, 1, policy_len, stderr);
+    fprintf(stderr, "\n");
 
     uint8_t* policy_hash = sha256(security_policy, policy_len);
     free(security_policy);
