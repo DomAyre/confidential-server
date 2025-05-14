@@ -10,6 +10,17 @@
 #include <stdint.h>
 
 typedef struct {
+    int64_t alg;
+    char* content_type;
+    // uint8_t** x5_chain;      // Array of pointers to byte arrays
+    // size_t* x5_chain_lens;   // Array of lengths for each certificate
+    // size_t x5_chain_count;   // Number of certificates in the chain
+    char* iss;
+    char* feed;
+} COSE_Sign1_Protected_Header;
+
+typedef struct {
+    COSE_Sign1_Protected_Header* protected_header;
     uint8_t* payload;
 } COSE_Sign1;
 

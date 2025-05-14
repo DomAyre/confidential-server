@@ -30,6 +30,11 @@ const char* amd_public_key_pem =
     "-----END PUBLIC KEY-----\n";
 
 
+const char* aci_uvm_feed = "ContainerPlat-AMD-UVM";
+const char* aci_uvm_iss = "did:x509:0:sha256:I__iuL25oXEVFdTP_aBLx_eT1RPHbCQ_ECBQfYZpt9s::eku:1.3.6.1.4.1.311.76.59.1.2";
+const int aci_uvm_min_svn = 100;
+
+
 int verify_snp_report_is_genuine(SnpReport* snp_report, cert_chain_t* cert_chain) {
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nVerifying SNP report is signed by a chain of certs going to AMD's root of trust\n");
@@ -131,11 +136,36 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
     // Get COSE_Sign1 object
     COSE_Sign1* cose_sign1 = parse_cose_sign1(buf, len);
     if (!cose_sign1) {
-        fprintf(stderr, "✘ Failed to extract payload from COSE_Sign1\n");
+        fprintf(stderr, "✘ Failed to parse COSE_Sign1\n");
         return 1;
     }
 
     // Check if COSE_Sign1 document is signed by Microsoft
+    fprintf(stderr, "\nEndorsement Issuer: \n%s", cose_sign1->protected_header->iss);
+    if (strcmp(cose_sign1->protected_header->iss, aci_uvm_iss) != 0) {
+        fprintf(stderr, "\n✘ Endorsement issuer does not match expected value\n");
+        free(cose_sign1);
+        return 1;
+    }
+    fprintf(stderr, " ✔\n");
+
+    fprintf(stderr, "\nEndorsement Feed: \n%s", cose_sign1->protected_header->feed);
+    if (strcmp(cose_sign1->protected_header->feed, aci_uvm_feed) != 0) {
+        fprintf(stderr, "\n✘ Endorsement feed does not match expected value\n");
+        free(cose_sign1);
+        return 1;
+    }
+    fprintf(stderr, " ✔\n");
+
+    char* svn = get_json_field((char*)cose_sign1->payload, "x-ms-sevsnpvm-guestsvn");
+    fprintf(stderr, "\nEndorsement SVN: \n%d (min: %d)", atoi(svn), aci_uvm_min_svn);
+    if (atoi(svn) < aci_uvm_min_svn) {
+        fprintf(stderr, "\n✘ Endorsement SVN does not meet minimum SVN\n");
+        free(cose_sign1);
+        return 1;
+    }
+    fprintf(stderr, " ✔\n");
+    free(svn);
 
     // Get the reported launch measurement
     fprintf(stderr, "\nSNP Report Launch Measurement: \n%s\n", hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL));

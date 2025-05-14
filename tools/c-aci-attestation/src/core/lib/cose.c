@@ -10,8 +10,134 @@
 #include "qcbor/qcbor_decode.h"
 #include "qcbor/qcbor_spiffy_decode.h"
 
+static int parse_protected_header(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
+
+    cose_sign1->protected_header = malloc(sizeof(COSE_Sign1_Protected_Header));
+    if (!cose_sign1->protected_header) {
+        fprintf(stderr, "✘ Failed to allocate memory for COSE_Sign1 protected header\n");
+        free(cose_sign1);
+        return 1;
+    }
+
+    QCBORDecodeContext protected_header_ctx;
+    QCBORDecode_Init(&protected_header_ctx, *msg, QCBOR_DECODE_MODE_NORMAL);
+
+    QCBORDecode_EnterArray(&protected_header_ctx, NULL);
+    QCBORDecode_GetNthTagOfLast(&protected_header_ctx, 0);
+    struct q_useful_buf_c protected_parameters;
+    QCBORDecode_EnterBstrWrapped(&protected_header_ctx, QCBOR_TAG_REQUIREMENT_NOT_A_TAG, &protected_parameters);
+    QCBORDecode_EnterMap(&protected_header_ctx, NULL);
+    enum
+    {
+      ALG_INDEX,
+      CONTENT_TYPE_INDEX,
+      X5_CHAIN_INDEX,
+      ISS_INDEX,
+      FEED_INDEX,
+      END_INDEX
+    };
+    QCBORItem header_items[END_INDEX + 1];
+    memset(header_items, 0, sizeof(header_items));
+    header_items[ALG_INDEX].label.int64 = 1;
+    header_items[ALG_INDEX].uLabelType = QCBOR_TYPE_INT64;
+    header_items[ALG_INDEX].uDataType = QCBOR_TYPE_INT64;
+    header_items[CONTENT_TYPE_INDEX].label.int64 = 3;
+    header_items[CONTENT_TYPE_INDEX].uLabelType = QCBOR_TYPE_INT64;
+    header_items[CONTENT_TYPE_INDEX].uDataType = QCBOR_TYPE_TEXT_STRING;
+    header_items[X5_CHAIN_INDEX].label.int64 = 33;
+    header_items[X5_CHAIN_INDEX].uLabelType = QCBOR_TYPE_INT64;
+    header_items[X5_CHAIN_INDEX].uDataType = QCBOR_TYPE_ANY;
+    header_items[ISS_INDEX].label.string = UsefulBuf_FromSZ("iss");
+    header_items[ISS_INDEX].uLabelType = QCBOR_TYPE_TEXT_STRING;
+    header_items[ISS_INDEX].uDataType = QCBOR_TYPE_TEXT_STRING;
+    header_items[FEED_INDEX].label.string = UsefulBuf_FromSZ("feed");
+    header_items[FEED_INDEX].uLabelType = QCBOR_TYPE_TEXT_STRING;
+    header_items[FEED_INDEX].uDataType = QCBOR_TYPE_TEXT_STRING;
+    header_items[END_INDEX].uLabelType = QCBOR_TYPE_NONE;
+    QCBORDecode_GetItemsInMap(&protected_header_ctx, header_items);
+
+    if (header_items[ALG_INDEX].uDataType != QCBOR_TYPE_NONE)
+        cose_sign1->protected_header->alg = header_items[ALG_INDEX].val.int64;
+
+    if (header_items[ISS_INDEX].uDataType != QCBOR_TYPE_NONE) {
+        cose_sign1->protected_header->iss = malloc(header_items[ISS_INDEX].val.string.len + 1);
+        memcpy(
+            cose_sign1->protected_header->iss,
+            header_items[ISS_INDEX].val.string.ptr,
+            header_items[ISS_INDEX].val.string.len
+        );
+        cose_sign1->protected_header->iss[header_items[ISS_INDEX].val.string.len] = '\0';
+    }
+
+    if (header_items[FEED_INDEX].uDataType != QCBOR_TYPE_NONE) {
+        cose_sign1->protected_header->feed = malloc(header_items[FEED_INDEX].val.string.len + 1);
+        memcpy(
+            cose_sign1->protected_header->feed,
+            header_items[FEED_INDEX].val.string.ptr,
+            header_items[FEED_INDEX].val.string.len
+        );
+        cose_sign1->protected_header->feed[header_items[FEED_INDEX].val.string.len] = '\0';
+    }
+
+    QCBORDecode_ExitMap(&protected_header_ctx);
+    QCBORDecode_ExitBstrWrapped(&protected_header_ctx);
+    QCBORDecode_Finish(&protected_header_ctx);
+
+    return 0;
+}
+
+static int parse_payload(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
+
+    QCBORDecodeContext ctx;
+    QCBORDecode_Init(&ctx, *msg, QCBOR_DECODE_MODE_NORMAL);
+
+    // Get the COSE Sign1 Object
+    QCBORItem cose_qcbor_item;
+    QCBORDecode_VGetNext(&ctx, &cose_qcbor_item);
+    if (
+        cose_qcbor_item.uDataType != QCBOR_TYPE_ARRAY ||
+        cose_qcbor_item.uTags[0] != CBOR_TAG_COSE_SIGN1 ||
+        cose_qcbor_item.val.uCount != 4
+    ) {
+        fprintf(stderr, "✘ QCBOR Structure isn't a COSE Sign1 Document\n");
+        free(cose_sign1);
+        return 1;
+    }
+
+    // Get the fields from the COSE Sign1 Object
+    QCBORItem protected_header, unprotected_header, payload, signature;
+    QCBORDecode_EnterArray(&ctx, NULL);
+
+    QCBORDecode_GetNext(&ctx, &protected_header);
+
+    QCBORDecode_GetNext(&ctx, &unprotected_header);
+
+    QCBORDecode_GetNext(&ctx, &payload);
+
+    if (payload.uDataType != QCBOR_TYPE_BYTE_STRING) {
+        fprintf(stderr, "✘ COSE_Sign1 payload failed to parse\n");
+        return 1;
+    }
+
+    cose_sign1->payload = malloc(payload.val.string.len + 1);
+    memcpy(cose_sign1->payload, payload.val.string.ptr, payload.val.string.len);
+    cose_sign1->payload[payload.val.string.len] = '\0';
+
+    QCBORDecode_GetNext(&ctx, &signature);
+
+    QCBORDecode_ExitArray(&ctx);
+    QCBORDecode_Finish(&ctx);
+
+    return 0;
+}
+
 
 COSE_Sign1* parse_cose_sign1(const uint8_t* buf, size_t len) {
+
+    if (buf == NULL || len == 0) {
+        fprintf(stderr, "✘ uvm_endorsements buffer is null or empty\n");
+        return NULL;
+    }
 
     COSE_Sign1* cose_sign1 = malloc(sizeof(COSE_Sign1));
     if (!cose_sign1) {
@@ -20,67 +146,15 @@ COSE_Sign1* parse_cose_sign1(const uint8_t* buf, size_t len) {
     }
     memset(cose_sign1, 0, sizeof(COSE_Sign1));
 
-    /* Basic input validation */
-    if (buf == NULL || len == 0) {
-        fprintf(stderr, "✘ uvm_endorsements buffer is null or empty\n");
-        return NULL;
-    }
-
-    /* Initialise QCBOR decoder */
     UsefulBufC msg = { .ptr = buf, .len = len };
-    QCBORDecodeContext ctx;
-    QCBORDecode_Init(&ctx, msg, QCBOR_DECODE_MODE_NORMAL);
 
-    /* Iterate through all top-level CBOR items in the buffer */
-    QCBORDecodeContext seq_ctx;
-    QCBORDecode_Init(&seq_ctx, msg, QCBOR_DECODE_MODE_NORMAL);
-    QCBORItem item;
-    int found_valid = 0;
-    while (1) {
-        QCBORDecode_VGetNext(&seq_ctx, &item);
-        if (item.uDataType == QCBOR_TYPE_NONE) {
-            break;
-        }
-        if (item.uTags[0] == 18 && item.uDataType == QCBOR_TYPE_ARRAY && item.val.uCount == 4) {
-            found_valid = 1;
-        }
-    }
-
-    QCBORError err = QCBORDecode_Finish(&seq_ctx);
-    if (!found_valid) {
-        fprintf(stderr, "✘ No valid COSE_Sign1 structure found in buffer\n");
+    if (parse_payload(&msg, cose_sign1) != 0) {
+        free(cose_sign1);
         return NULL;
     }
 
-    // Extract and print the payload from the COSE_Sign1 structure
-    QCBORDecodeContext payload_ctx;
-    QCBORDecode_Init(&payload_ctx, msg, QCBOR_DECODE_MODE_NORMAL);
-    QCBORItem payload_item;
-    while (1) {
-        QCBORDecode_VGetNext(&payload_ctx, &payload_item);
-        if (payload_item.uDataType == QCBOR_TYPE_NONE) {
-            break;
-        }
-        if (payload_item.uTags[0] == 18 && payload_item.uDataType == QCBOR_TYPE_ARRAY && payload_item.val.uCount == 4) {
-            QCBORDecode_EnterArray(&payload_ctx, NULL);
-            QCBORItem tmp;
-            QCBORDecode_GetNext(&payload_ctx, &tmp); // protected headers
-            QCBORDecode_GetNext(&payload_ctx, &tmp); // unprotected headers
-            QCBORDecode_GetNext(&payload_ctx, &tmp); // payload
-            if (tmp.uDataType == QCBOR_TYPE_BYTE_STRING) {
-                cose_sign1->payload = malloc(tmp.val.string.len + 1);
-                memcpy(cose_sign1->payload, tmp.val.string.ptr, tmp.val.string.len);
-                cose_sign1->payload[tmp.val.string.len] = '\0';
-            } else {
-                fprintf(stderr, "✘ COSE_Sign1 payload is not a byte string\n");
-            }
-            QCBORDecode_ExitArray(&payload_ctx);
-            break;
-        }
-    }
-
-    if (err != QCBOR_ERR_NO_MORE_ITEMS && err != QCBOR_SUCCESS) {
-        fprintf(stderr, "✘ QCBOR decoding failed with error %d\n", err);
+    if (parse_protected_header(&msg, cose_sign1) != 0) {
+        free(cose_sign1);
         return NULL;
     }
 
