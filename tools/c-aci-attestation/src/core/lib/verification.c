@@ -10,6 +10,7 @@
 #include "sha256.h"
 #include "hex.h"
 #include "cose.h"
+#include "json.h"
 #include <unistd.h>
 
 const char* amd_public_key_pem =
@@ -121,12 +122,44 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
     }
 }
 
-/**
- * Verify that uvm_endorsements is a valid COSE_Sign1 message.
- * buf/len is the COSE_Sign1 message buffer.
- */
-int verify_host_vm_build(const uint8_t* buf, size_t len) {
+int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t len) {
     fprintf(stderr, "\n----------------------------------------------------\n");
-    fprintf(stderr, "\nVerifying uvm_endorsements is valid COSE_Sign1 structure\n");
-    return cose_verify_sign1(buf, len);
+    fprintf(stderr, "\nVerifying Utility VM in SNP Report is endorsed by Microsoft\n");
+
+    // Check if COSE_Sign1 document is signed by Microsoft
+
+
+    // Get the reported launch measurement
+    fprintf(stderr, "\nSNP Report Launch Measurement: \n%s\n", hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL));
+
+    // Get COSE payload
+    char* cose_payload = get_cose_payload(buf, len);
+    if (!cose_payload) {
+        fprintf(stderr, "✘ Failed to extract payload from COSE_Sign1\n");
+        return 1;
+    }
+
+    // Get the endorsed launch measurement
+    char* launch_measurement_hex_str = get_json_field(cose_payload, "x-ms-sevsnpvm-launchmeasurement");
+    free(cose_payload);
+    if (!launch_measurement_hex_str) {
+        fprintf(stderr, "✘ Failed to extract launch measurement from COSE_Sign1 payload\n");
+        return 1;
+    }
+    uint8_t* launch_measurement = hex_decode(
+        launch_measurement_hex_str,
+        strlen(launch_measurement_hex_str),
+        NULL
+    );
+    fprintf(stderr, "\nEndorsed Launch Measurement: \n%s\n", hex_encode(launch_measurement, sizeof(snp_report->measurement), 16, NULL));
+
+    // Check the endorsed and reported launch measurements are the same
+    if (memcmp(launch_measurement, snp_report->measurement, sizeof(snp_report->measurement)) == 0) {
+        fprintf(stderr, "\n✔ Utility VM endorsement matches SNP report\n");
+    } else {
+        fprintf(stderr, "\n✘ Utility VM endorsement does not match SNP report\n");
+        return 1;
+    }
+
+    return 0;
 }

@@ -28,7 +28,7 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
  * are set in the implementation.
  * Returns 0 on success, non-zero on failure.
  */
-int verify_host_vm_build(const uint8_t* buf, size_t len);
+int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t len);
 
 #ifdef __cplusplus
 }

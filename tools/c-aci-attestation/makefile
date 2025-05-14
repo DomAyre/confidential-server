@@ -45,6 +45,13 @@ $(BUILD_DIR):
 $(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR) $(DEPS)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
+# Link QCBOR spiffy decode if present (for newer QCBOR)
+ifeq (,$(wildcard $(QCBOR_DIR)/src/qcbor_spiffy_decode.c))
+# No spiffy decode source file, do nothing
+else
+LIB_SRCS += $(QCBOR_DIR)/src/qcbor_spiffy_decode.c
+endif
+
 # Phony targets for individual programs
 $(BINS): %: $(BUILD_DIR)/%
 
@@ -84,7 +91,7 @@ test_aci:
 	c-aci-testing target run . \
 		--policy-type "allow_all" \
 		--deployment-name "test-aci"
- 
+
 deps:
 	@mkdir -p $(DEPS_DIR)
 	@echo "Fetching t_cose into $(TCOSE_DIR)..."

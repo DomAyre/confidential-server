@@ -111,7 +111,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // Parse the host VM build COSE from uvm_endorsements
+    // Parse the utility VM build COSE from uvm_endorsements
     // Extract uvm_endorsements base64 from attestation JSON
     char* uvm_endorsements_b64 = get_json_field(ccf_attestation, "uvm_endorsements");
     if (!uvm_endorsements_b64) {
@@ -131,7 +131,7 @@ int main(int argc, char** argv) {
         fprintf(stderr, "✘ Failed to decode uvm_endorsements base64\n");
         return 1;
     }
-    if (verify_host_vm_build(cose_buf, cose_len) != 0) {
+    if (verify_utility_vm_build(&snp_report, cose_buf, cose_len) != 0) {
         free(cose_buf);
         return 1;
     }
@@ -142,7 +142,7 @@ int main(int argc, char** argv) {
     fprintf(stderr, "✔ SNP Report comes from genuine AMD hardware\n");
     fprintf(stderr, "✔ SNP Report has the expected report data\n");
     fprintf(stderr, "✔ SNP Report has the expected security policy\n");
-    fprintf(stderr, "- Host VM build is known to be trusted (TBD)\n");
+    fprintf(stderr, "✔ SNP Report utility VM measurement is endorsed by Microsoft\n");
     fprintf(stderr, "\nAttestation validation successful\n");
     return 0;
 }

@@ -14,11 +14,11 @@ extern "C" {
 #endif
 
 /**
- * Check that buf/len is a valid COSE_Sign1 structure (simple header check).
- * Returns 0 on success, non-zero on failure.
- * Prints a summary to stderr.
+ * Get the payload from a COSE_Sign1 structure.
+ * Returns a pointer to the payload, or NULL on failure.
+ * The caller is responsible for freeing the returned pointer.
  */
-int cose_verify_sign1(const uint8_t* buf, size_t len);
+char* get_cose_payload(const uint8_t* buf, size_t len);
 
 #ifdef __cplusplus
 }
