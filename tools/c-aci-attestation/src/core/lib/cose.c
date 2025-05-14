@@ -11,7 +11,14 @@
 #include "qcbor/qcbor_spiffy_decode.h"
 
 
-char* get_cose_payload(const uint8_t* buf, size_t len) {
+COSE_Sign1* parse_cose_sign1(const uint8_t* buf, size_t len) {
+
+    COSE_Sign1* cose_sign1 = malloc(sizeof(COSE_Sign1));
+    if (!cose_sign1) {
+        fprintf(stderr, "✘ Failed to allocate memory for COSE_Sign1 structure\n");
+        return NULL;
+    }
+    memset(cose_sign1, 0, sizeof(COSE_Sign1));
 
     /* Basic input validation */
     if (buf == NULL || len == 0) {
@@ -49,23 +56,21 @@ char* get_cose_payload(const uint8_t* buf, size_t len) {
     QCBORDecodeContext payload_ctx;
     QCBORDecode_Init(&payload_ctx, msg, QCBOR_DECODE_MODE_NORMAL);
     QCBORItem payload_item;
-    char* payload = NULL;
     while (1) {
         QCBORDecode_VGetNext(&payload_ctx, &payload_item);
         if (payload_item.uDataType == QCBOR_TYPE_NONE) {
             break;
         }
         if (payload_item.uTags[0] == 18 && payload_item.uDataType == QCBOR_TYPE_ARRAY && payload_item.val.uCount == 4) {
-            // Enter the array and get to the payload (3rd element)
             QCBORDecode_EnterArray(&payload_ctx, NULL);
             QCBORItem tmp;
             QCBORDecode_GetNext(&payload_ctx, &tmp); // protected headers
             QCBORDecode_GetNext(&payload_ctx, &tmp); // unprotected headers
             QCBORDecode_GetNext(&payload_ctx, &tmp); // payload
             if (tmp.uDataType == QCBOR_TYPE_BYTE_STRING) {
-                payload = malloc(tmp.val.string.len + 1);
-                memcpy(payload, tmp.val.string.ptr, tmp.val.string.len);
-                payload[tmp.val.string.len] = '\0';
+                cose_sign1->payload = malloc(tmp.val.string.len + 1);
+                memcpy(cose_sign1->payload, tmp.val.string.ptr, tmp.val.string.len);
+                cose_sign1->payload[tmp.val.string.len] = '\0';
             } else {
                 fprintf(stderr, "✘ COSE_Sign1 payload is not a byte string\n");
             }
@@ -79,5 +84,5 @@ char* get_cose_payload(const uint8_t* buf, size_t len) {
         return NULL;
     }
 
-    return payload;
+    return cose_sign1;
 }

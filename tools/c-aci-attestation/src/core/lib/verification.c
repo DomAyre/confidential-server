@@ -99,7 +99,9 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
         return 1;
     }
 
-    fprintf(stderr, "\nExpected Security Policy: \n%s\n", (char*)security_policy);
+    fprintf(stderr, "\nExpected Security Policy: \n```\n");
+    fwrite(security_policy, 1, policy_len, stderr);
+    fprintf(stderr, "```\n");
 
     uint8_t* policy_hash = sha256(security_policy, policy_len);
     free(security_policy);
@@ -126,22 +128,21 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nVerifying Utility VM in SNP Report is endorsed by Microsoft\n");
 
-    // Check if COSE_Sign1 document is signed by Microsoft
-
-
-    // Get the reported launch measurement
-    fprintf(stderr, "\nSNP Report Launch Measurement: \n%s\n", hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL));
-
-    // Get COSE payload
-    char* cose_payload = get_cose_payload(buf, len);
-    if (!cose_payload) {
+    // Get COSE_Sign1 object
+    COSE_Sign1* cose_sign1 = parse_cose_sign1(buf, len);
+    if (!cose_sign1) {
         fprintf(stderr, "✘ Failed to extract payload from COSE_Sign1\n");
         return 1;
     }
 
+    // Check if COSE_Sign1 document is signed by Microsoft
+
+    // Get the reported launch measurement
+    fprintf(stderr, "\nSNP Report Launch Measurement: \n%s\n", hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL));
+
     // Get the endorsed launch measurement
-    char* launch_measurement_hex_str = get_json_field(cose_payload, "x-ms-sevsnpvm-launchmeasurement");
-    free(cose_payload);
+    char* launch_measurement_hex_str = get_json_field((char*)cose_sign1->payload, "x-ms-sevsnpvm-launchmeasurement");
+    free(cose_sign1);
     if (!launch_measurement_hex_str) {
         fprintf(stderr, "✘ Failed to extract launch measurement from COSE_Sign1 payload\n");
         return 1;

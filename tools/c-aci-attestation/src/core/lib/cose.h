@@ -9,19 +9,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef struct {
+    uint8_t* payload;
+} COSE_Sign1;
+
 
 /**
  * Get the payload from a COSE_Sign1 structure.
  * Returns a pointer to the payload, or NULL on failure.
  * The caller is responsible for freeing the returned pointer.
  */
-char* get_cose_payload(const uint8_t* buf, size_t len);
+COSE_Sign1* parse_cose_sign1(const uint8_t* buf, size_t len);
 
-#ifdef __cplusplus
-}
-#endif
 
 #endif // COSE_H
