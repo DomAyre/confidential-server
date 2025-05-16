@@ -232,7 +232,7 @@ uint8_t* remove_signature(SnpReport* snp_report) {
     if (!report_without_signature) return NULL;
 
     // Copy the report data without the signature
-    memcpy(report_without_signature, snp_report, signature_offset);
+    memcpy(report_without_signature, snp_report, signature_offset); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
 
     return report_without_signature;
 }

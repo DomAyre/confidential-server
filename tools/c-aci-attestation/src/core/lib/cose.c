@@ -43,10 +43,9 @@ static int parse_protected_header(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
     cose_sign1->protected_header = malloc(sizeof(COSE_Sign1_Protected_Header));
     if (!cose_sign1->protected_header) {
         fprintf(stderr, "✘ Failed to allocate memory for COSE_Sign1 protected header\n");
-        free(cose_sign1);
         return 1;
     }
-    memset(cose_sign1->protected_header, 0, sizeof(COSE_Sign1_Protected_Header));
+    memset(cose_sign1->protected_header, 0, sizeof(COSE_Sign1_Protected_Header)); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
 
     QCBORDecodeContext protected_header_ctx;
     QCBORDecode_Init(&protected_header_ctx, *msg, QCBOR_DECODE_MODE_NORMAL);
@@ -66,7 +65,7 @@ static int parse_protected_header(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
       END_INDEX
     };
     QCBORItem header_items[END_INDEX + 1];
-    memset(header_items, 0, sizeof(header_items));
+    memset(header_items, 0, sizeof(header_items)); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
     header_items[ALG_INDEX].label.int64 = 1;
     header_items[ALG_INDEX].uLabelType = QCBOR_TYPE_INT64;
     header_items[ALG_INDEX].uDataType = QCBOR_TYPE_INT64;
@@ -112,21 +111,17 @@ static int parse_protected_header(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
 
     if (header_items[ISS_INDEX].uDataType != QCBOR_TYPE_NONE) {
         cose_sign1->protected_header->iss = malloc(header_items[ISS_INDEX].val.string.len + 1);
-        memcpy(
-            cose_sign1->protected_header->iss,
-            header_items[ISS_INDEX].val.string.ptr,
-            header_items[ISS_INDEX].val.string.len
-        );
+        memcpy(cose_sign1->protected_header->iss,  // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+               header_items[ISS_INDEX].val.string.ptr,
+               header_items[ISS_INDEX].val.string.len);
         cose_sign1->protected_header->iss[header_items[ISS_INDEX].val.string.len] = '\0';
     }
 
     if (header_items[FEED_INDEX].uDataType != QCBOR_TYPE_NONE) {
         cose_sign1->protected_header->feed = malloc(header_items[FEED_INDEX].val.string.len + 1);
-        memcpy(
-            cose_sign1->protected_header->feed,
-            header_items[FEED_INDEX].val.string.ptr,
-            header_items[FEED_INDEX].val.string.len
-        );
+        memcpy(cose_sign1->protected_header->feed,  // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+               header_items[FEED_INDEX].val.string.ptr,
+               header_items[FEED_INDEX].val.string.len);
         cose_sign1->protected_header->feed[header_items[FEED_INDEX].val.string.len] = '\0';
     }
 
@@ -151,7 +146,6 @@ static int parse_payload(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
         cose_qcbor_item.val.uCount != 4
     ) {
         fprintf(stderr, "✘ QCBOR Structure isn't a COSE Sign1 Document\n");
-        free(cose_sign1);
         return 1;
     }
 
@@ -168,7 +162,7 @@ static int parse_payload(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
     }
 
     cose_sign1->payload = malloc(payload.val.string.len + 1);
-    memcpy(cose_sign1->payload, payload.val.string.ptr, payload.val.string.len);
+    memcpy(cose_sign1->payload, payload.val.string.ptr, payload.val.string.len); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
     cose_sign1->payload[payload.val.string.len] = '\0';
 
     QCBORDecode_ExitArray(&ctx);
@@ -190,19 +184,19 @@ COSE_Sign1* cose_sign1_new(const uint8_t* buf, size_t len) {
         fprintf(stderr, "✘ Failed to allocate memory for COSE_Sign1 structure\n");
         return NULL;
     }
-    memset(cose_sign1, 0, sizeof(COSE_Sign1));
+    memset(cose_sign1, 0, sizeof(COSE_Sign1)); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
 
     cose_sign1->raw = malloc(len);
     cose_sign1->raw->ptr = buf;
     cose_sign1->raw->len = len;
 
     if (parse_payload(cose_sign1->raw, cose_sign1) != 0) {
-        free(cose_sign1);
+        cose_sign1_free(cose_sign1);
         return NULL;
     }
 
     if (parse_protected_header(cose_sign1->raw, cose_sign1) != 0) {
-        free(cose_sign1);
+        cose_sign1_free(cose_sign1);
         return NULL;
     }
 

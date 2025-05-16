@@ -120,7 +120,7 @@ asan:
 # Static analysis
 lint:
 	@echo "Running clang-tidy over C sources..."
-	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
+	@clang-tidy --warnings-as-errors='*' $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
 
 test_aci:
 	c-aci-testing target run . \
