@@ -91,7 +91,7 @@ test_unit: $(TEST_BINARIES)
 	@$(BUILD_DIR)/test_snp_report_unit
 	@$(BUILD_DIR)/test_uvm_endorsements_unit
 
-test_system: $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_ccf
+test_system: all
 	./build/get_attestation_ccf "example-report-data" \
 		| xargs -0 ./build/verify_attestation_ccf \
 			--report-data "example-report-data" \
