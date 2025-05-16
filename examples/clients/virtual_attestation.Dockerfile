@@ -13,7 +13,7 @@ RUN chmod +x -R /usr/local/bin/encryption_wrapper
 
 # Copy the attestation fetching binary and populate
 COPY tools/c-aci-attestation/ /src/c-aci-attestation
-RUN make -C /src/c-aci-attestation && cp /src/c-aci-attestation/build/get_attestation_ccf /usr/local/bin/get_attestation_ccf
+RUN make -C /src/c-aci-attestation clean all && cp /src/c-aci-attestation/build/get_attestation_ccf /usr/local/bin/get_attestation_ccf
 RUN get_attestation_ccf > /virtual_attestation
 
 ENV CONF_SERVER_URL=${CONF_SERVER_URL}
