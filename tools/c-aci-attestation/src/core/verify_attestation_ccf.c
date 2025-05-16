@@ -81,17 +81,22 @@ int main(int argc, char** argv) {
     cert_chain_t* certificate_chain = cert_chain_new();
     if (!certificate_chain) {
         fprintf(stderr, "Failed to create certificate chain object\n");
+        free(vcek_cert_pem);
+        free(certificate_chain_pem);
         return 1;
     }
     if (cert_chain_add_pem(certificate_chain, vcek_cert_pem) != 0) {
         fprintf(stderr, "Failed to add VCEK certificate to chain\n");
         free(vcek_cert_pem);
+        free(certificate_chain_pem);
+        cert_chain_free(certificate_chain);
         return 1;
     }
     free(vcek_cert_pem);
     if (cert_chain_add_pem_chain(certificate_chain, certificate_chain_pem) != 0) {
         fprintf(stderr, "Failed to append certificate chain\n");
         free(certificate_chain_pem);
+        cert_chain_free(certificate_chain);
         return 1;
     }
     free(certificate_chain_pem);

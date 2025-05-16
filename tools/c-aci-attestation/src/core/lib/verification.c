@@ -115,8 +115,17 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
         return 1;
     }
 
-    fprintf(stderr, "\nSecurity Policy SHA256: \n%s\n", hex_encode(policy_hash, sizeof(snp_report->host_data), 16, NULL));
-    fprintf(stderr, "\nSNP Report Host Data: \n%s\n", hex_encode(snp_report->host_data, sizeof(snp_report->host_data), 16, NULL));
+    // Print policy hash and report host_data in hex, then free buffers
+    char* policy_hex = hex_encode(policy_hash, sizeof(snp_report->host_data), 16, NULL);
+    if (policy_hex) {
+        fprintf(stderr, "\nSecurity Policy SHA256: \n%s\n", policy_hex);
+        free(policy_hex);
+    }
+    char* host_data_hex = hex_encode(snp_report->host_data, sizeof(snp_report->host_data), 16, NULL);
+    if (host_data_hex) {
+        fprintf(stderr, "\nSNP Report Host Data: \n%s\n", host_data_hex);
+        free(host_data_hex);
+    }
 
     if (memcmp(policy_hash, snp_report->host_data, sizeof(snp_report->host_data)) == 0) {
         fprintf(stderr, "\n✔ SNP report's host_data matches the security policy hash\n");
@@ -182,7 +191,11 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
     printf("\n✔ COSE signature verified\n");
 
     // Get the reported launch measurement
-    fprintf(stderr, "\nSNP Report Launch Measurement: \n%s\n", hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL));
+    char* reported_hex = hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL);
+    if (reported_hex) {
+        fprintf(stderr, "\nSNP Report Launch Measurement: \n%s\n", reported_hex);
+        free(reported_hex);
+    }
 
     // Get the endorsed launch measurement
     char* launch_measurement_hex_str = get_json_field((char*)cose_sign1->payload, "x-ms-sevsnpvm-launchmeasurement");
@@ -196,15 +209,22 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
         strlen(launch_measurement_hex_str),
         NULL
     );
-    fprintf(stderr, "\nEndorsed Launch Measurement: \n%s\n", hex_encode(launch_measurement, sizeof(snp_report->measurement), 16, NULL));
+    // Print endorsed launch measurement and clean up
+    char* endorsed_hex = hex_encode(launch_measurement, sizeof(snp_report->measurement), 16, NULL);
+    if (endorsed_hex) {
+        fprintf(stderr, "\nEndorsed Launch Measurement: \n%s\n", endorsed_hex);
+        free(endorsed_hex);
+    }
+    free(launch_measurement_hex_str);
 
     // Check the endorsed and reported launch measurements are the same
     if (memcmp(launch_measurement, snp_report->measurement, sizeof(snp_report->measurement)) == 0) {
         fprintf(stderr, "\n✔ Utility VM endorsement matches SNP report\n");
+        free(launch_measurement);
+        return 0;
     } else {
         fprintf(stderr, "\n✘ Utility VM endorsement does not match SNP report\n");
+        free(launch_measurement);
         return 1;
     }
-
-    return 0;
 }

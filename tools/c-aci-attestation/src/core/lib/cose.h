@@ -39,6 +39,7 @@ COSE_Sign1* cose_sign1_new(const uint8_t* buf, size_t len);
  */
 void cose_sign1_free(COSE_Sign1* cose_sign1);
 
+
 /**
  * Verifies the signature of a COSE_Sign1 structure.
  * Returns 0 if the signature is valid, or a non-zero value on failure.

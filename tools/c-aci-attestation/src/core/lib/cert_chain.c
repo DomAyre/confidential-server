@@ -165,6 +165,16 @@ int cert_chain_validate(const cert_chain_t* chain, size_t expected_cert_count) {
 }
 
 
+X509* cert_chain_get_cert(const cert_chain_t* chain, size_t index) {
+    if (!chain) return NULL;
+    STACK_OF(X509)* stack = cert_chain_get_stack(chain);
+    if (!stack) return NULL;
+    int num = sk_X509_num(stack);
+    if (index >= (size_t)num) return NULL;
+    return sk_X509_value(stack, index);
+}
+
+
 int cert_chain_validate_root(const cert_chain_t* chain, EVP_PKEY* trusted_root_pubkey) {
     if (!chain || !trusted_root_pubkey) return 1;
     STACK_OF(X509)* stack = cert_chain_get_stack(chain);
@@ -243,6 +253,8 @@ int cert_chain_validate_signature(cert_chain_t* chain, const Signature* signatur
     }
 
     int verify_ok = ECDSA_do_verify(digest, 48, ecdsa_sig, ec_key);
+    // Free the digest buffer
+    free(digest);
 
     ECDSA_SIG_free(ecdsa_sig);
     EC_KEY_free(ec_key);

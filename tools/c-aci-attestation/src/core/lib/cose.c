@@ -15,23 +15,10 @@
 
 int verify_cose_sign1_signature(const COSE_Sign1* cose_sign1) {
 
-    // Extract public key from x5_chain for signature verification
-    EVP_PKEY* evp_pubkey = NULL;
-    if (cose_sign1->protected_header && cose_sign1->protected_header->x5_chain) {
-        STACK_OF(X509)* stack = cert_chain_get_stack(cose_sign1->protected_header->x5_chain);
-        if (stack && sk_X509_num(stack) > 0) {
-            X509* leaf_cert = sk_X509_value(stack, 0);
-            if (leaf_cert) {
-                evp_pubkey = X509_get_pubkey(leaf_cert);
-            }
-        }
-    }
-    if (!evp_pubkey) {
-        fprintf(stderr, "✘ Could not extract public key from x5_chain for COSE verification\n");
-        return 1;
-    }
+    EVP_PKEY* leaf_pubkey = X509_get_pubkey(cert_chain_get_cert(cose_sign1->protected_header->x5_chain, 0));
+
     struct t_cose_key cose_pubkey = {0};
-    cose_pubkey.k.key_ptr = evp_pubkey;
+    cose_pubkey.k.key_ptr = leaf_pubkey;
     cose_pubkey.crypto_lib = 1; // 1 = OpenSSL, see t_cose_key definition
 
     struct t_cose_sign1_verify_ctx verify_ctx;
@@ -42,7 +29,7 @@ int verify_cose_sign1_signature(const COSE_Sign1* cose_sign1) {
     t_cose_sign1_verify_init(&verify_ctx, 0);
     t_cose_sign1_set_verification_key(&verify_ctx, cose_pubkey);
     result = t_cose_sign1_verify(&verify_ctx, cose_message, &payload, NULL);
-    EVP_PKEY_free(evp_pubkey);
+    EVP_PKEY_free(leaf_pubkey);
     if (result == T_COSE_SUCCESS) {
         return 0; // Signature valid
     } else {
@@ -169,13 +156,10 @@ static int parse_payload(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
     }
 
     // Get the fields from the COSE Sign1 Object
-    QCBORItem protected_header, unprotected_header, payload, signature;
+    QCBORItem payload, tmp;
     QCBORDecode_EnterArray(&ctx, NULL);
-
-    QCBORDecode_GetNext(&ctx, &protected_header);
-
-    QCBORDecode_GetNext(&ctx, &unprotected_header);
-
+    QCBORDecode_GetNext(&ctx, &tmp); // protected header
+    QCBORDecode_GetNext(&ctx, &tmp); // unprotected header
     QCBORDecode_GetNext(&ctx, &payload);
 
     if (payload.uDataType != QCBOR_TYPE_BYTE_STRING) {
@@ -186,8 +170,6 @@ static int parse_payload(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
     cose_sign1->payload = malloc(payload.val.string.len + 1);
     memcpy(cose_sign1->payload, payload.val.string.ptr, payload.val.string.len);
     cose_sign1->payload[payload.val.string.len] = '\0';
-
-    QCBORDecode_GetNext(&ctx, &signature);
 
     QCBORDecode_ExitArray(&ctx);
     QCBORDecode_Finish(&ctx);

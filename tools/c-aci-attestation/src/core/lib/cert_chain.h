@@ -40,6 +40,11 @@ int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain);
 int cert_chain_validate(const cert_chain_t* chain, size_t expected_cert_count);
 
 
+// Returns the certificate at the specified index in the chain.
+// Returns NULL if the index is out of bounds or if the chain is NULL.
+X509* cert_chain_get_cert(const cert_chain_t* chain, size_t index);
+
+
 // Loads a public key from a PEM-formatted string (JSON-escaped allowed).
 // Returns an EVP_PKEY* on success, or NULL on failure. Caller must free with pubkey_free().
 // Requires <openssl/evp.h> and <openssl/pem.h> to be included by consumer.

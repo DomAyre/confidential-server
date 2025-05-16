@@ -8,6 +8,13 @@ CFLAGS := -Wall -Wextra -O2 -Isrc/core \
           -DT_COSE_USE_OPENSSL_CRYPTO=1
 LDFLAGS := -lcrypto -lm
 
+# AddressSanitizer support: enable by setting ASAN=1 on the make command
+ifdef ASAN
+CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -g
+LDFLAGS += -fsanitize=address
+export ASAN_OPTIONS = detect_leaks=1:print_summary=1
+endif
+
 BUILD_DIR := build
 SRC_DIR := src/core
 TEST_DIR := test
@@ -29,7 +36,7 @@ LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S) $(COSE
 TEST_BINARIES := $(BUILD_DIR)/test_base64_unit $(BUILD_DIR)/test_hex_unit $(BUILD_DIR)/test_files_unit $(BUILD_DIR)/test_sha256_unit $(BUILD_DIR)/test_json_unit $(BUILD_DIR)/test_cert_chain_unit $(BUILD_DIR)/test_host_amd_certs_unit $(BUILD_DIR)/test_snp_report_unit
 
 DEPS := deps
-.PHONY: all clean test test_unit test_python lint $(BINS) $(DEPS)
+.PHONY: all clean test test_unit test_python lint $(BINS) $(DEPS) asan
 
 all: $(DEPS) clean $(BIN_PATHS)
 
@@ -81,6 +88,9 @@ test_python: all python
 	@echo "Running Python pytest suite..."
 	pip install -r test/python/requirements.txt
 	pytest -q test/python
+
+asan:
+	$(MAKE) ASAN=1 test_system
 
 # Static analysis
 lint:
