@@ -1,11 +1,11 @@
 import os
 import subprocess
-import json
 
 import attestation
 
 _exe_get = attestation._exe_get_att
 _exe_verify = attestation._exe_verify
+_exe_snp_version = attestation._exe_snp_version
 
 def test_get_attestation_roundtrip_default(tmp_path):
     # Wrapper invocation
@@ -31,6 +31,13 @@ def test_verify_attestation_roundtrip_no_policy():
     ret_cli = (proc.returncode == 0)
     ret_py = attestation.verify_attestation_ccf(s)
     assert ret_py == ret_cli
+
+def test_get_snp_version_roundtrip_cli():
+    out_py = attestation.get_snp_version()
+    proc = subprocess.run([_exe_snp_version], capture_output=True, text=True)
+    assert proc.returncode == 0
+    out_cli = proc.stdout.strip()
+    assert out_py == out_cli
 
 def test_verify_attestation_roundtrip_with_policy():
     # Base64-encode the allow_all policy for CLI and wrapper

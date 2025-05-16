@@ -1,18 +1,6 @@
-import os
 import json
-import base64
-import pytest
-
 import attestation
 
-# Path to example policy relative to project root
-_POLICY_PATH = os.path.abspath(
-    os.path.join(
-        os.path.dirname(__file__),
-        '..', '..', '..', '..',
-        'examples', 'security_policies', 'allow_all.rego'
-    )
-)
 
 def test_get_snp_version():
     v = attestation.get_snp_version()
