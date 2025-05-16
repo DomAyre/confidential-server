@@ -26,6 +26,10 @@ void cert_chain_free(cert_chain_t* chain);
 int cert_chain_add_pem(cert_chain_t* chain, const char* pem);
 
 
+// Adds a single DER certificate to an existing chain.
+int cert_chain_add_der(cert_chain_t* chain, const uint8_t* der, size_t der_len);
+
+
 // Parses one or more PEM certificates concatenated and adds them to the
 // existing chain.
 int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain);

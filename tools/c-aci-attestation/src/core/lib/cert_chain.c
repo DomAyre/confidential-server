@@ -72,6 +72,20 @@ int cert_chain_add_pem(cert_chain_t* chain, const char* pem) {
 }
 
 
+int cert_chain_add_der(cert_chain_t* chain, const uint8_t* der, size_t der_len) {
+    if (!chain || !der || der_len == 0) return 1;
+
+    const unsigned char* p = der;
+    X509* cert = d2i_X509(NULL, &p, der_len);
+    if (!cert) return 1;
+    if (!sk_X509_push(chain->stack, cert)) {
+        X509_free(cert);
+        return 1;
+    }
+    return 0;
+}
+
+
 int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain) {
     if (!chain || !pem_chain) return 1;
 

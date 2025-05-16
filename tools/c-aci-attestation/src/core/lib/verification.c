@@ -1,4 +1,4 @@
-#include "verification.h"
+ #include "verification.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -134,7 +134,7 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
     fprintf(stderr, "\nVerifying Utility VM in SNP Report is endorsed by Microsoft\n");
 
     // Get COSE_Sign1 object
-    COSE_Sign1* cose_sign1 = parse_cose_sign1(buf, len);
+    COSE_Sign1* cose_sign1 = cose_sign1_new(buf, len);
     if (!cose_sign1) {
         fprintf(stderr, "✘ Failed to parse COSE_Sign1\n");
         return 1;
@@ -144,7 +144,7 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
     fprintf(stderr, "\nEndorsement Issuer: \n%s", cose_sign1->protected_header->iss);
     if (strcmp(cose_sign1->protected_header->iss, aci_uvm_iss) != 0) {
         fprintf(stderr, "\n✘ Endorsement issuer does not match expected value\n");
-        free(cose_sign1);
+        cose_sign1_free(cose_sign1);
         return 1;
     }
     fprintf(stderr, " ✔\n");
@@ -152,7 +152,7 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
     fprintf(stderr, "\nEndorsement Feed: \n%s", cose_sign1->protected_header->feed);
     if (strcmp(cose_sign1->protected_header->feed, aci_uvm_feed) != 0) {
         fprintf(stderr, "\n✘ Endorsement feed does not match expected value\n");
-        free(cose_sign1);
+        cose_sign1_free(cose_sign1);
         return 1;
     }
     fprintf(stderr, " ✔\n");
@@ -161,18 +161,32 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
     fprintf(stderr, "\nEndorsement SVN: \n%d (min: %d)", atoi(svn), aci_uvm_min_svn);
     if (atoi(svn) < aci_uvm_min_svn) {
         fprintf(stderr, "\n✘ Endorsement SVN does not meet minimum SVN\n");
-        free(cose_sign1);
+        cose_sign1_free(cose_sign1);
         return 1;
     }
     fprintf(stderr, " ✔\n");
     free(svn);
+
+    if (cert_chain_validate(cose_sign1->protected_header->x5_chain, 3) != 0) {
+        fprintf(stderr, "\n✘ Endorsement certificate chain is invalid\n");
+        cose_sign1_free(cose_sign1);
+        return 1;
+    }
+
+    if (verify_cose_sign1_signature(cose_sign1)) {
+        fprintf(stderr, "\n✘ COSE_Sign1 signature verification failed\n");
+        cose_sign1_free(cose_sign1);
+        return 1;
+    }
+
+    printf("\n✔ COSE signature verified\n");
 
     // Get the reported launch measurement
     fprintf(stderr, "\nSNP Report Launch Measurement: \n%s\n", hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL));
 
     // Get the endorsed launch measurement
     char* launch_measurement_hex_str = get_json_field((char*)cose_sign1->payload, "x-ms-sevsnpvm-launchmeasurement");
-    free(cose_sign1);
+    cose_sign1_free(cose_sign1);
     if (!launch_measurement_hex_str) {
         fprintf(stderr, "✘ Failed to extract launch measurement from COSE_Sign1 payload\n");
         return 1;
