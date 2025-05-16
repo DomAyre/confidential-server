@@ -53,7 +53,7 @@ TEST_BINARIES := \
 DEPS := deps
 .PHONY: all clean test test_unit test_python lint $(BINS) $(DEPS) asan
 
-all: $(DEPS) clean $(BIN_PATHS)
+all: $(DEPS) $(BIN_PATHS)
 
 docker:
 	@docker compose build
@@ -80,7 +80,7 @@ $(BINS): %: $(BUILD_DIR)/%
 test: test_unit test_system test_python test_docker
 	@echo "All tests passed"
 
-test_unit: clean $(TEST_BINARIES)
+test_unit: $(TEST_BINARIES)
 	@$(BUILD_DIR)/test_base64_unit
 	@$(BUILD_DIR)/test_hex_unit
 	@$(BUILD_DIR)/test_files_unit
@@ -91,7 +91,7 @@ test_unit: clean $(TEST_BINARIES)
 	@$(BUILD_DIR)/test_snp_report_unit
 	@$(BUILD_DIR)/test_uvm_endorsements_unit
 
-test_system: clean $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_ccf
+test_system: $(BUILD_DIR)/get_attestation_ccf $(BUILD_DIR)/verify_attestation_ccf
 	./build/get_attestation_ccf "example-report-data" \
 		| xargs -0 ./build/verify_attestation_ccf \
 			--report-data "example-report-data" \
@@ -104,7 +104,7 @@ test_python: all python
 	@echo "Running Python pytest suite..."
 	pip install -r test/python/requirements.txt
 	pytest -q test/python
-# Run C unit tests with coverage instrumentation and generate report
+
 coverage:
 	-@$(MAKE) clean
 	-@$(MAKE) COVERAGE=1 test_unit
@@ -117,7 +117,6 @@ coverage:
 asan:
 	$(MAKE) ASAN=1 test_system
 
-# Static analysis
 lint:
 	@echo "Running clang-tidy over C sources..."
 	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
@@ -221,4 +220,4 @@ $(BUILD_DIR)/test_uvm_endorsements_unit: $(TEST_DIR)/test_uvm_endorsements_unit.
 
 
 clean:
-	rm -rf $(BUILD_DIR)
+	rm -rf $(BUILD_DIR) $(DEPS_DIR)
