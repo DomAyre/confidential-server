@@ -55,6 +55,10 @@ DEPS := deps
 
 all: $(DEPS) $(BIN_PATHS)
 
+compile-commands:
+	@echo "Generating compile_commands.json with bear..."
+	@bear -- make clean all
+
 docker:
 	@docker compose build
 
