@@ -65,12 +65,33 @@ static int test_sha256_null(void) {
     return 0;
 }
 
+// Test SHA-256 on a well-known sentence
+static int test_sha256_quick(void) {
+    const uint8_t data[] = "The quick brown fox jumps over the lazy dog";
+    uint8_t *digest = sha256(data, strlen((const char*)data));
+    if (!digest) {
+        fprintf(stderr, "[quick] sha256 returned NULL\n");
+        return 1;
+    }
+    char hexstr[65];
+    bin2hex(digest, 32, hexstr);
+    free(digest);
+    const char *expected = "d7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592";
+    if (strcmp(hexstr, expected) != 0) {
+        fprintf(stderr, "[quick] FAILED: expected '%s', got '%s'\n", expected, hexstr);
+        return 1;
+    }
+    printf("[PASS] sha256 quick sentence\n");
+    return 0;
+}
+
 int main(void) {
     // Declare test suite
     printf("=== test_sha256_unit ===\n");
     if (test_sha256_empty()) return 1;
     if (test_sha256_abc()) return 1;
     if (test_sha256_null()) return 1;
+    if (test_sha256_quick()) return 1;
     printf("All tests passed\n");
     return 0;
 }
