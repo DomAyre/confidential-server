@@ -253,7 +253,6 @@ int cert_chain_validate_signature(cert_chain_t* chain, const Signature* signatur
     }
 
     int verify_ok = ECDSA_do_verify(digest, 48, ecdsa_sig, ec_key);
-    // Free the digest buffer
     free(digest);
 
     ECDSA_SIG_free(ecdsa_sig);
@@ -261,6 +260,7 @@ int cert_chain_validate_signature(cert_chain_t* chain, const Signature* signatur
     EVP_PKEY_free(vcek_pubkey);
 
 #pragma GCC diagnostic pop
+
 
     return verify_ok == 1 ? 0 : 1;
 }

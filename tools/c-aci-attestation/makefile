@@ -8,17 +8,15 @@ CFLAGS := -Wall -Wextra -O2 -Isrc/core \
           -DT_COSE_USE_OPENSSL_CRYPTO=1
 LDFLAGS := -lcrypto -lm
 
-# AddressSanitizer support: enable by setting ASAN=1 on the make command
+ifeq ($(COVERAGE),1)
+CFLAGS += --coverage -O0
+LDFLAGS += --coverage
+endif
+
 ifdef ASAN
 CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -g
 LDFLAGS += -fsanitize=address
 export ASAN_OPTIONS = detect_leaks=1:print_summary=1
-endif
-
-# Code coverage support: set COVERAGE=1 to build and instrument tests with gcov/lcov
-ifeq ($(COVERAGE),1)
-CFLAGS += --coverage -O0
-LDFLAGS += --coverage
 endif
 
 BUILD_DIR := build
@@ -81,6 +79,17 @@ endif
 # Phony targets for individual programs
 $(BINS): %: $(BUILD_DIR)/%
 
+
+lint_deps:
+	@echo "Installing lint dependencies..."
+	@sudo apt-get update && sudo apt-get install -y \
+		clang-tidy
+
+coverage_deps:
+	@echo "Installing test dependencies..."
+	@sudo apt-get update && sudo apt-get install -y \
+		lcov
+
 test: test_unit test_system test_python test_docker
 	@echo "All tests passed"
 
@@ -109,7 +118,12 @@ test_python: all python
 	pip install -r test/python/requirements.txt
 	pytest -q test/python
 
-coverage:
+# Static analysis
+lint: lint_deps
+	@echo "Running clang-tidy over C sources..."
+	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
+
+coverage: coverage_deps
 	-@$(MAKE) clean
 	-@$(MAKE) COVERAGE=1 test_unit
 	@echo "Capturing coverage data..."
@@ -120,10 +134,6 @@ coverage:
 
 asan:
 	$(MAKE) ASAN=1 test_system
-
-lint: deps
-	@echo "Running clang-tidy over C sources..."
-	@clang-tidy -p compile_commands.json $(SRC_DIR)/lib/*.c -- $(CFLAGS)
 
 test_aci:
 	c-aci-testing target run . \
