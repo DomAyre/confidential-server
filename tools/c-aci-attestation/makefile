@@ -39,12 +39,12 @@ $(BINS): %: $(BUILD_DIR)/%
 
 lint_deps:
 	@echo "Installing lint dependencies..."
-	@apt-get update && apt-get install -y \
+	@sudo apt-get update && sudo apt-get install -y \
 		clang-tidy
 
 coverage_deps:
 	@echo "Installing test dependencies..."
-	@apt-get update && apt-get install -y \
+	@sudo apt-get update && sudo apt-get install -y \
 		lcov
 
 test: test_unit test_system test_python test_docker
