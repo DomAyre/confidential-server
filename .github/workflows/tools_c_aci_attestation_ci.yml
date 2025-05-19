@@ -39,8 +39,11 @@ jobs:
     - run: make -C tools/c-aci-attestation test_python
 
   coverage:
-    runs-on: ubuntu-latest
     needs: [unit, system, docker, python]
-    steps:
-    - uses: actions/checkout@v4
-    - run: make -C tools/c-aci-attestation coverage
+    uses: devcontainers/ci@v0.3
+    with:
+      imageName: ghcr.io/domayre/confidential-server/devcontainer:latest
+      cacheFrom: ghcr.io/domayre/confidential-server/devcontainer:latest
+      push: always
+      runCmd: |
+        make -C tools/c-aci-attestation coverage
