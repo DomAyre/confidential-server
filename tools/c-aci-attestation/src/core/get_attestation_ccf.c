@@ -5,6 +5,7 @@
 #include "lib/snp_report.h"
 #include "lib/host_amd_certs.h"
 #include "lib/base64.h"
+#include "lib/uvm_endorsements.h"
 
 int main(int argc, char** argv) {
 
@@ -51,17 +52,29 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+    // Get the UVM endorsements base64
+    char* uvm_endorsements_b64 = get_uvm_endorsements();
+    if (!uvm_endorsements_b64) {
+        fprintf(stderr, "Failed to load UVM endorsements\n");
+        free(snp_report_b64);
+        free(host_amd_certs_b64);
+        return 1;
+    }
     // Format the final output JSON
     printf(
         "{\n"
         "  \"evidence\": \"%s\",\n"
-        "  \"endorsements\": \"%s\"\n"
+        "  \"endorsements\": \"%s\",\n"
+        "  \"uvm_endorsements\": \"%s\"\n"
         "}",
         snp_report_b64,
-        host_amd_certs_b64
+        host_amd_certs_b64,
+        uvm_endorsements_b64
     );
 
+    // Clean up allocated resources
     free(snp_report_b64);
     free(host_amd_certs_b64);
+    free(uvm_endorsements_b64);
     return 0;
 }

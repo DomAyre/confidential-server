@@ -7,7 +7,9 @@
 #include "lib/json.h"
 #include "lib/cert_chain.h"
 #include "lib/verification.h"
+#include "lib/cose.h"
 #include <openssl/stack.h>
+#include <ctype.h>
 #include <openssl/evp.h>
 
 int main(int argc, char** argv) {
@@ -80,17 +82,22 @@ int main(int argc, char** argv) {
     cert_chain_t* certificate_chain = cert_chain_new();
     if (!certificate_chain) {
         fprintf(stderr, "Failed to create certificate chain object\n");
+        free(vcek_cert_pem);
+        free(certificate_chain_pem);
         return 1;
     }
     if (cert_chain_add_pem(certificate_chain, vcek_cert_pem) != 0) {
         fprintf(stderr, "Failed to add VCEK certificate to chain\n");
         free(vcek_cert_pem);
+        free(certificate_chain_pem);
+        cert_chain_free(certificate_chain);
         return 1;
     }
     free(vcek_cert_pem);
     if (cert_chain_add_pem_chain(certificate_chain, certificate_chain_pem) != 0) {
         fprintf(stderr, "Failed to append certificate chain\n");
         free(certificate_chain_pem);
+        cert_chain_free(certificate_chain);
         return 1;
     }
     free(certificate_chain_pem);
@@ -110,16 +117,48 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (verify_host_vm_build() != 0) {
+    // Parse the utility VM build COSE from uvm_endorsements
+    // Extract uvm_endorsements base64 from attestation JSON
+    char* uvm_endorsements_b64 = get_json_field(ccf_attestation, "uvm_endorsements");
+    if (!uvm_endorsements_b64) {
+        fprintf(stderr, "✘ Missing uvm_endorsements in attestation JSON\n");
         return 1;
     }
+    // Trim whitespace
+    char* p = uvm_endorsements_b64;
+    while (*p && isspace((unsigned char)*p)) p++;
+    char* end = uvm_endorsements_b64 + strlen(uvm_endorsements_b64);
+    while (end > p && isspace((unsigned char)*(end - 1))) end--;
+    size_t trim_len = end - p;
+    size_t cose_len = 0;
+    uint8_t* cose_buf = base64_decode(p, trim_len, &cose_len);
+    free(uvm_endorsements_b64);
+    if (!cose_buf) {
+        fprintf(stderr, "✘ Failed to decode uvm_endorsements base64\n");
+        return 1;
+    }
+
+    // Get COSE_Sign1 object
+    COSE_Sign1* uvm_endorsement = cose_sign1_new(cose_buf, cose_len);
+    if (!uvm_endorsement) {
+        fprintf(stderr, "✘ Failed to parse COSE_Sign1\n");
+        return 1;
+    }
+
+    if (verify_utility_vm_build(&snp_report, uvm_endorsement) != 0) {
+        cose_sign1_free(uvm_endorsement);
+        free(cose_buf);
+        return 1;
+    }
+    cose_sign1_free(uvm_endorsement);
+    free(cose_buf);
 
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nFinal Results:\n");
     fprintf(stderr, "✔ SNP Report comes from genuine AMD hardware\n");
     fprintf(stderr, "✔ SNP Report has the expected report data\n");
     fprintf(stderr, "✔ SNP Report has the expected security policy\n");
-    fprintf(stderr, "- Host VM build is known to be trusted (TBD)\n");
+    fprintf(stderr, "✔ SNP Report utility VM measurement is endorsed by Microsoft\n");
     fprintf(stderr, "\nAttestation validation successful\n");
     return 0;
 }

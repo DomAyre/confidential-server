@@ -72,6 +72,20 @@ int cert_chain_add_pem(cert_chain_t* chain, const char* pem) {
 }
 
 
+int cert_chain_add_der(cert_chain_t* chain, const uint8_t* der, size_t der_len) {
+    if (!chain || !der || der_len == 0) return 1;
+
+    const unsigned char* p = der;
+    X509* cert = d2i_X509(NULL, &p, der_len);
+    if (!cert) return 1;
+    if (!sk_X509_push(chain->stack, cert)) {
+        X509_free(cert);
+        return 1;
+    }
+    return 0;
+}
+
+
 int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain) {
     if (!chain || !pem_chain) return 1;
 
@@ -148,6 +162,16 @@ int cert_chain_validate(const cert_chain_t* chain, size_t expected_cert_count) {
     int root_ok = X509_verify(last, root_key);
     EVP_PKEY_free(root_key);
     return (root_ok > 0 ? 0 : 1);
+}
+
+
+X509* cert_chain_get_cert(const cert_chain_t* chain, size_t index) {
+    if (!chain) return NULL;
+    STACK_OF(X509)* stack = cert_chain_get_stack(chain);
+    if (!stack) return NULL;
+    int num = sk_X509_num(stack);
+    if (index >= (size_t)num) return NULL;
+    return sk_X509_value(stack, index);
 }
 
 

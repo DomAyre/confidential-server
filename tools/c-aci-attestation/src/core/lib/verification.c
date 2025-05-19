@@ -1,4 +1,4 @@
-#include "verification.h"
+ #include "verification.h"
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -9,6 +9,8 @@
 #include "base64.h"
 #include "sha256.h"
 #include "hex.h"
+#include "json.h"
+#include <unistd.h>
 
 const char* amd_public_key_pem =
     "-----BEGIN PUBLIC KEY-----\n"
@@ -25,6 +27,11 @@ const char* amd_public_key_pem =
     "pCCoMNit2uLo9M18fHz10lOMT8nWAUvRZFzteXCm+7PHdYPlmQwUw3LvenJ/ILXo\n"
     "QPHfbkH0CyPfhl1jWhJFZasCAwEAAQ==\n"
     "-----END PUBLIC KEY-----\n";
+
+
+const char* aci_uvm_feed = "ContainerPlat-AMD-UVM";
+const char* aci_uvm_iss = "did:x509:0:sha256:I__iuL25oXEVFdTP_aBLx_eT1RPHbCQ_ECBQfYZpt9s::eku:1.3.6.1.4.1.311.76.59.1.2";
+const int aci_uvm_min_svn = 100;
 
 
 int verify_snp_report_is_genuine(SnpReport* snp_report, cert_chain_t* cert_chain) {
@@ -96,9 +103,9 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
         return 1;
     }
 
-    fprintf(stderr, "\nExpected Security Policy: \n");
+    fprintf(stderr, "\nExpected Security Policy: \n```\n");
     fwrite(security_policy, 1, policy_len, stderr);
-    fprintf(stderr, "\n");
+    fprintf(stderr, "```\n");
 
     uint8_t* policy_hash = sha256(security_policy, policy_len);
     free(security_policy);
@@ -130,12 +137,80 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
     }
 }
 
-int verify_host_vm_build() {
+int verify_utility_vm_build(SnpReport* snp_report, COSE_Sign1* uvm_endorsement) {
     fprintf(stderr, "\n----------------------------------------------------\n");
-    fprintf(stderr, "\nVerifying that the Host VM build is trusted\n");
-    fprintf(stderr, "\nEventually, this will be done by making builds reproducable, and comparing a digest of the VM image. ");
-    fprintf(stderr, "For now, we check that the digest of the build is endorsed by Microsoft\n");
+    fprintf(stderr, "\nVerifying Utility VM in SNP Report is endorsed by Microsoft\n");
 
-    fprintf(stderr, "\n- To be implemented\n");
-    return 0;
+    // Check if COSE_Sign1 document is signed by Microsoft
+    fprintf(stderr, "\nEndorsement Issuer: \n%s", uvm_endorsement->protected_header->iss);
+    if (strcmp(uvm_endorsement->protected_header->iss, aci_uvm_iss) != 0) {
+        fprintf(stderr, "\n✘ Endorsement issuer does not match expected value\n");
+        return 1;
+    }
+    fprintf(stderr, " ✔\n");
+
+    fprintf(stderr, "\nEndorsement Feed: \n%s", uvm_endorsement->protected_header->feed);
+    if (strcmp(uvm_endorsement->protected_header->feed, aci_uvm_feed) != 0) {
+        fprintf(stderr, "\n✘ Endorsement feed does not match expected value\n");
+        return 1;
+    }
+    fprintf(stderr, " ✔\n");
+
+    char* svn = get_json_field((char*)uvm_endorsement->payload, "x-ms-sevsnpvm-guestsvn");
+    fprintf(stderr, "\nEndorsement SVN: \n%d (min: %d)", atoi(svn), aci_uvm_min_svn);
+    if (atoi(svn) < aci_uvm_min_svn) {
+        fprintf(stderr, "\n✘ Endorsement SVN does not meet minimum SVN\n");
+        return 1;
+    }
+    fprintf(stderr, " ✔\n");
+    free(svn);
+
+    if (cert_chain_validate(uvm_endorsement->protected_header->x5_chain, 3) != 0) {
+        fprintf(stderr, "\n✘ Endorsement certificate chain is invalid\n");
+        return 1;
+    }
+
+    if (verify_cose_sign1_signature(uvm_endorsement)) {
+        fprintf(stderr, "\n✘ COSE_Sign1 signature verification failed\n");
+        return 1;
+    }
+
+    fprintf(stderr, "\n✔ COSE signature verified\n");
+
+    // Get the reported launch measurement
+    char* reported_hex = hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL);
+    if (reported_hex) {
+        fprintf(stderr, "\nSNP Report Launch Measurement: \n%s\n", reported_hex);
+        free(reported_hex);
+    }
+
+    // Get the endorsed launch measurement
+    char* launch_measurement_hex_str = get_json_field((char*)uvm_endorsement->payload, "x-ms-sevsnpvm-launchmeasurement");
+    if (!launch_measurement_hex_str) {
+        fprintf(stderr, "✘ Failed to extract launch measurement from COSE_Sign1 payload\n");
+        return 1;
+    }
+    uint8_t* launch_measurement = hex_decode(
+        launch_measurement_hex_str,
+        strlen(launch_measurement_hex_str),
+        NULL
+    );
+    // Print endorsed launch measurement and clean up
+    char* endorsed_hex = hex_encode(launch_measurement, sizeof(snp_report->measurement), 16, NULL);
+    if (endorsed_hex) {
+        fprintf(stderr, "\nEndorsed Launch Measurement: \n%s\n", endorsed_hex);
+        free(endorsed_hex);
+    }
+    free(launch_measurement_hex_str);
+
+    // Check the endorsed and reported launch measurements are the same
+    if (memcmp(launch_measurement, snp_report->measurement, sizeof(snp_report->measurement)) == 0) {
+        fprintf(stderr, "\n✔ Utility VM endorsement matches SNP report\n");
+        free(launch_measurement);
+        return 0;
+    } else {
+        fprintf(stderr, "\n✘ Utility VM endorsement does not match SNP report\n");
+        free(launch_measurement);
+        return 1;
+    }
 }

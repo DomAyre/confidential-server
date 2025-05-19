@@ -26,6 +26,10 @@ void cert_chain_free(cert_chain_t* chain);
 int cert_chain_add_pem(cert_chain_t* chain, const char* pem);
 
 
+// Adds a single DER certificate to an existing chain.
+int cert_chain_add_der(cert_chain_t* chain, const uint8_t* der, size_t der_len);
+
+
 // Parses one or more PEM certificates concatenated and adds them to the
 // existing chain.
 int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain);
@@ -34,6 +38,11 @@ int cert_chain_add_pem_chain(cert_chain_t* chain, const char* pem_chain);
 // Validates that each certificate in the chain is signed by the next certificate.
 // The last certificate must be self-signed.
 int cert_chain_validate(const cert_chain_t* chain, size_t expected_cert_count);
+
+
+// Returns the certificate at the specified index in the chain.
+// Returns NULL if the index is out of bounds or if the chain is NULL.
+X509* cert_chain_get_cert(const cert_chain_t* chain, size_t index);
 
 
 // Loads a public key from a PEM-formatted string (JSON-escaped allowed).
