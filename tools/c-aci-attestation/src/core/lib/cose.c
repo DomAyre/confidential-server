@@ -186,7 +186,7 @@ COSE_Sign1* cose_sign1_new(const uint8_t* buf, size_t len) {
     }
     memset(cose_sign1, 0, sizeof(COSE_Sign1));
 
-    cose_sign1->raw = malloc(len);
+    cose_sign1->raw = malloc(sizeof(UsefulBufC));
     if (!cose_sign1->raw) {
         fprintf(stderr, "✘ Failed to allocate memory for COSE_Sign1 raw buffer\n");
         cose_sign1_free(cose_sign1);
