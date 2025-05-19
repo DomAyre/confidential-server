@@ -80,7 +80,7 @@ endif
 $(BINS): %: $(BUILD_DIR)/%
 
 
-lint_deps:
+lint_deps: deps
 	@echo "Installing lint dependencies..."
 	@sudo apt-get update && sudo apt-get install -y \
 		clang-tidy
@@ -118,10 +118,9 @@ test_python: all python
 	pip install -r test/python/requirements.txt
 	pytest -q test/python
 
-# Static analysis
 lint: lint_deps
 	@echo "Running clang-tidy over C sources..."
-	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
+	@clang-tidy -p compile_commands.json $(SRC_DIR)/lib/*.c -- $(CFLAGS)
 
 coverage: coverage_deps
 	-@$(MAKE) clean
