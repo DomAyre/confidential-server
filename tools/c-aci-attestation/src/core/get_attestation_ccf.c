@@ -62,5 +62,6 @@ int main(int argc, char** argv) {
     );
 
     free(snp_report_b64);
+    free(host_amd_certs_b64);
     return 0;
 }
