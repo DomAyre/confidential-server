@@ -1,8 +1,5 @@
 name: CI
 
-permissions:
-  packages: write
-
 on:
   push:
     branches: [ main ]
@@ -16,22 +13,30 @@ env:
   PYTHONPATH: ${{ github.workspace }}/src:${{ github.workspace }}/tools
 
 jobs:
-  lint:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v4
-    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
-    - run: ruff check . --exclude tools/
-
   devcontainer:
     runs-on: ubuntu-latest
+    permissions:
+      packages: write
     steps:
     - uses: actions/checkout@v4
+    - uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
     - uses: devcontainers/ci@v0.3
       with:
         imageName: ghcr.io/domayre/confidential-server/devcontainer
         cacheFrom: ghcr.io/domayre/confidential-server/devcontainer
         push: always
+
+  lint:
+    runs-on: ubuntu-latest
+    needs: devcontainer
+    steps:
+    - uses: actions/checkout@v4
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
+    - run: ruff check . --exclude tools/
 
   test-config:
     runs-on: ubuntu-latest
@@ -67,6 +72,8 @@ jobs:
 
   encryption-wrapper:
     uses: ./.github/workflows/tools_encryption_wrapper_ci.yml
+    needs: devcontainer
 
   c-aci-attestation:
     uses: ./.github/workflows/tools_c_aci_attestation_ci.yml
+    needs: devcontainer
