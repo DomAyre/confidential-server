@@ -24,7 +24,7 @@ int verify_snp_report_has_report_data(SnpReport* snp_report, snp_report_data_t* 
 int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* security_policy_b64);
 
 /*
- * Verify a COSE_Sign1 document (host VM build) in-memory buffer.
+ * Verify a COSE_Sign1 document (endorsement of UVM) in-memory buffer.
  * buf/len is the COSE_Sign1 message; trust anchor and expected claims
  * are set in the implementation.
  * Returns 0 on success, non-zero on failure.
