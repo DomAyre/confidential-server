@@ -144,13 +144,14 @@ int main(int argc, char** argv) {
         fprintf(stderr, "✘ Failed to parse COSE_Sign1\n");
         return 1;
     }
-    free(cose_buf);
 
     if (verify_utility_vm_build(&snp_report, uvm_endorsement) != 0) {
+        cose_sign1_free(uvm_endorsement);
         free(cose_buf);
         return 1;
     }
     cose_sign1_free(uvm_endorsement);
+    free(cose_buf);
 
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nFinal Results:\n");
