@@ -13,7 +13,7 @@ RUN chmod +x -R /usr/local/bin/encryption_wrapper
 
 # Install the attestation package
 COPY tools/c-aci-attestation/ /src/c-aci-attestation
-RUN make -C /src/c-aci-attestation python
+RUN make -C /src/c-aci-attestation clean all python
 
 ENV CONF_SERVER_URL=${CONF_SERVER_URL}
 ENV PATH="/opt/venv/bin:$PATH"
