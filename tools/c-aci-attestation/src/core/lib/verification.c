@@ -175,7 +175,7 @@ int verify_utility_vm_build(SnpReport* snp_report, COSE_Sign1* uvm_endorsement) 
         return 1;
     }
 
-    printf("\n✔ COSE signature verified\n");
+    fprintf(stderr, "\n✔ COSE signature verified\n");
 
     // Get the reported launch measurement
     char* reported_hex = hex_encode(snp_report->measurement, sizeof(snp_report->measurement), 16, NULL);
