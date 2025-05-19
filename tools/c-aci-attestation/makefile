@@ -123,7 +123,7 @@ asan:
 
 lint: deps
 	@echo "Running clang-tidy over C sources..."
-	@clang-tidy -p compile_commands.json $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
+	@clang-tidy -p compile_commands.json $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR) -I$(QCBOR_DIR)/inc
 
 test_aci:
 	c-aci-testing target run . \
