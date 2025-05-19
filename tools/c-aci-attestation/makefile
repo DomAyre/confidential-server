@@ -2,6 +2,11 @@ CC := gcc
 CFLAGS := -Wall -Wextra -O2 -Isrc/core
 LDFLAGS := -lcrypto -lm
 
+ifeq ($(COVERAGE),1)
+CFLAGS += --coverage -O0
+LDFLAGS += --coverage
+endif
+
 BUILD_DIR := build
 SRC_DIR := src/core
 TEST_DIR := test
@@ -62,6 +67,15 @@ test_python: all python
 lint:
 	@echo "Running clang-tidy over C sources..."
 	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
+
+coverage:
+	-@$(MAKE) clean
+	-@$(MAKE) COVERAGE=1 test_unit
+	@echo "Capturing coverage data..."
+	@lcov --capture --directory $(BUILD_DIR) --output-file $(BUILD_DIR)/coverage.info
+	@echo "Generating HTML report..."
+	@genhtml $(BUILD_DIR)/coverage.info --output-directory $(BUILD_DIR)/coverage_html
+	@echo "Coverage report generated in $(BUILD_DIR)/coverage_html/index.html"
 
 test_aci:
 	c-aci-testing target run  . \
