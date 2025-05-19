@@ -7,6 +7,7 @@
 #include "lib/json.h"
 #include "lib/cert_chain.h"
 #include "lib/verification.h"
+#include "lib/cose.h"
 #include <openssl/stack.h>
 #include <ctype.h>
 #include <openssl/evp.h>
@@ -136,11 +137,20 @@ int main(int argc, char** argv) {
         fprintf(stderr, "✘ Failed to decode uvm_endorsements base64\n");
         return 1;
     }
-    if (verify_utility_vm_build(&snp_report, cose_buf, cose_len) != 0) {
-        free(cose_buf);
+
+    // Get COSE_Sign1 object
+    COSE_Sign1* uvm_endorsement = cose_sign1_new(cose_buf, cose_len);
+    if (!uvm_endorsement) {
+        fprintf(stderr, "✘ Failed to parse COSE_Sign1\n");
         return 1;
     }
     free(cose_buf);
+
+    if (verify_utility_vm_build(&snp_report, uvm_endorsement) != 0) {
+        free(cose_buf);
+        return 1;
+    }
+    cose_sign1_free(uvm_endorsement);
 
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nFinal Results:\n");

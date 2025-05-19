@@ -9,7 +9,6 @@
 #include "base64.h"
 #include "sha256.h"
 #include "hex.h"
-#include "cose.h"
 #include "json.h"
 #include <unistd.h>
 
@@ -138,53 +137,41 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
     }
 }
 
-int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t len) {
+int verify_utility_vm_build(SnpReport* snp_report, COSE_Sign1* uvm_endorsement) {
     fprintf(stderr, "\n----------------------------------------------------\n");
     fprintf(stderr, "\nVerifying Utility VM in SNP Report is endorsed by Microsoft\n");
 
-    // Get COSE_Sign1 object
-    COSE_Sign1* cose_sign1 = cose_sign1_new(buf, len);
-    if (!cose_sign1) {
-        fprintf(stderr, "✘ Failed to parse COSE_Sign1\n");
-        return 1;
-    }
-
     // Check if COSE_Sign1 document is signed by Microsoft
-    fprintf(stderr, "\nEndorsement Issuer: \n%s", cose_sign1->protected_header->iss);
-    if (strcmp(cose_sign1->protected_header->iss, aci_uvm_iss) != 0) {
+    fprintf(stderr, "\nEndorsement Issuer: \n%s", uvm_endorsement->protected_header->iss);
+    if (strcmp(uvm_endorsement->protected_header->iss, aci_uvm_iss) != 0) {
         fprintf(stderr, "\n✘ Endorsement issuer does not match expected value\n");
-        cose_sign1_free(cose_sign1);
         return 1;
     }
     fprintf(stderr, " ✔\n");
 
-    fprintf(stderr, "\nEndorsement Feed: \n%s", cose_sign1->protected_header->feed);
-    if (strcmp(cose_sign1->protected_header->feed, aci_uvm_feed) != 0) {
+    fprintf(stderr, "\nEndorsement Feed: \n%s", uvm_endorsement->protected_header->feed);
+    if (strcmp(uvm_endorsement->protected_header->feed, aci_uvm_feed) != 0) {
         fprintf(stderr, "\n✘ Endorsement feed does not match expected value\n");
-        cose_sign1_free(cose_sign1);
         return 1;
     }
     fprintf(stderr, " ✔\n");
 
-    char* svn = get_json_field((char*)cose_sign1->payload, "x-ms-sevsnpvm-guestsvn");
+    char* svn = get_json_field((char*)uvm_endorsement->payload, "x-ms-sevsnpvm-guestsvn");
     fprintf(stderr, "\nEndorsement SVN: \n%d (min: %d)", atoi(svn), aci_uvm_min_svn);
     if (atoi(svn) < aci_uvm_min_svn) {
         fprintf(stderr, "\n✘ Endorsement SVN does not meet minimum SVN\n");
-        cose_sign1_free(cose_sign1);
         return 1;
     }
     fprintf(stderr, " ✔\n");
     free(svn);
 
-    if (cert_chain_validate(cose_sign1->protected_header->x5_chain, 3) != 0) {
+    if (cert_chain_validate(uvm_endorsement->protected_header->x5_chain, 3) != 0) {
         fprintf(stderr, "\n✘ Endorsement certificate chain is invalid\n");
-        cose_sign1_free(cose_sign1);
         return 1;
     }
 
-    if (verify_cose_sign1_signature(cose_sign1)) {
+    if (verify_cose_sign1_signature(uvm_endorsement)) {
         fprintf(stderr, "\n✘ COSE_Sign1 signature verification failed\n");
-        cose_sign1_free(cose_sign1);
         return 1;
     }
 
@@ -198,8 +185,7 @@ int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t le
     }
 
     // Get the endorsed launch measurement
-    char* launch_measurement_hex_str = get_json_field((char*)cose_sign1->payload, "x-ms-sevsnpvm-launchmeasurement");
-    cose_sign1_free(cose_sign1);
+    char* launch_measurement_hex_str = get_json_field((char*)uvm_endorsement->payload, "x-ms-sevsnpvm-launchmeasurement");
     if (!launch_measurement_hex_str) {
         fprintf(stderr, "✘ Failed to extract launch measurement from COSE_Sign1 payload\n");
         return 1;

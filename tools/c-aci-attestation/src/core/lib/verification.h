@@ -5,6 +5,7 @@
 
 #include "snp_report.h"
 #include "cert_chain.h"
+#include "cose.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -28,7 +29,7 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
  * are set in the implementation.
  * Returns 0 on success, non-zero on failure.
  */
-int verify_utility_vm_build(SnpReport* snp_report, const uint8_t* buf, size_t len);
+int verify_utility_vm_build(SnpReport* snp_report, COSE_Sign1* uvm_endorsement);
 
 #ifdef __cplusplus
 }
