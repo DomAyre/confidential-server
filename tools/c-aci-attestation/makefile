@@ -117,7 +117,7 @@ coverage:
 asan:
 	$(MAKE) ASAN=1 test_system
 
-lint:
+lint: deps
 	@echo "Running clang-tidy over C sources..."
 	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
 
