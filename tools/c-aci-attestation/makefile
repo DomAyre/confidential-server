@@ -2,6 +2,12 @@ CC := gcc
 CFLAGS := -Wall -Wextra -O2 -Isrc/core
 LDFLAGS := -lcrypto -lm
 
+ifdef ASAN
+CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -g
+LDFLAGS += -fsanitize=address
+export ASAN_OPTIONS = detect_leaks=1:print_summary=1
+endif
+
 BUILD_DIR := build
 SRC_DIR := src/core
 TEST_DIR := test
@@ -12,7 +18,7 @@ BIN_PATHS := $(addprefix $(BUILD_DIR)/,$(BINS))
 LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S)
 TEST_BINARIES := $(BUILD_DIR)/test_base64_unit $(BUILD_DIR)/test_hex_unit $(BUILD_DIR)/test_files_unit $(BUILD_DIR)/test_sha256_unit $(BUILD_DIR)/test_json_unit $(BUILD_DIR)/test_cert_chain_unit $(BUILD_DIR)/test_host_amd_certs_unit $(BUILD_DIR)/test_snp_report_unit
 
-.PHONY: all clean test test_unit test_python lint $(BINS)
+.PHONY: all clean test test_unit test_python lint $(BINS) asan
 
 all: clean $(BIN_PATHS)
 
@@ -62,6 +68,9 @@ test_python: all python
 lint:
 	@echo "Running clang-tidy over C sources..."
 	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
+
+asan:
+	$(MAKE) ASAN=1 test_system
 
 test_aci:
 	c-aci-testing target run  . \
