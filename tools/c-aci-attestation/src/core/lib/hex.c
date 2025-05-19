@@ -5,16 +5,15 @@
 char* hex_encode(const uint8_t* data, size_t input_length, size_t bytes_per_line, size_t* output_length) {
     if (!data) return NULL;
 
-    // Construct the length of the output string (allocating if necessary)
-    if (!output_length) {
-        output_length = (size_t*)malloc(sizeof(size_t));
-    }
-    *output_length = 0;
-    *output_length += input_length * 2;                           // 2 hex chars per byte
-    *output_length += (input_length > 0 ? input_length - 1 : 0);  // 1 space or newline per byte
+    // Determine output length pointer (use local variable if caller did not provide one)
+    size_t local_len = 0;
+    size_t* out_len = output_length ? output_length : &local_len;
+    *out_len = 0;
+    *out_len += input_length * 2;                           // 2 hex chars per byte
+    *out_len += (input_length > 0 ? input_length - 1 : 0);  // 1 space or newline per byte
 
-    // Allocate the output string
-    char* output = malloc(*output_length);
+    // Allocate the output string (+1 for NUL terminator)
+    char* output = malloc(*out_len + 1);
     if (!output) return NULL;
 
     // Format the hex data
@@ -30,7 +29,7 @@ char* hex_encode(const uint8_t* data, size_t input_length, size_t bytes_per_line
         }
     }
 
-    output[*output_length] = '\0';
+    output[*out_len] = '\0';
 
     return output;
 }
@@ -51,22 +50,21 @@ uint8_t* hex_decode(const char* hex, size_t input_length, size_t* output_length)
     }
     if (digit_count % 2 != 0) return NULL;
 
-    // Calculate output length: 1 byte per 2 hex digits
-    if (!output_length) {
-        output_length = (size_t*)malloc(sizeof(size_t));
-    }
-    *output_length = digit_count / 2;
-    if (*output_length == 0) {
+    // Determine output length pointer (use local variable if caller did not provide one)
+    size_t local_len = 0;
+    size_t* out_len = output_length ? output_length : &local_len;
+    *out_len = digit_count / 2;
+    if (*out_len == 0) {
         return malloc(1);
     }
 
     // Allocate space for the output
-    uint8_t* output = malloc(*output_length);
+    uint8_t* output = malloc(*out_len);
     if (!output) return NULL;
 
     size_t hex_idx = 0;
     size_t output_idx = 0;
-    while (output_idx < *output_length) {
+    while (output_idx < *out_len) {
 
         // Read high nibble
         int vhi = -1;

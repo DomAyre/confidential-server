@@ -186,7 +186,7 @@ char* format_report_data(const uint8_t* data, size_t length) {
     size_t output_len = 0;
     output_len += length * 2;                     // 2 hex chars per byte
     output_len += (length > 0 ? length - 1 : 0);  // 1 space or newline per byte
-    if (is_ascii) output_len += ascii_len + 1;    // ASCII length plus parenthesis'
+    if (is_ascii) output_len += ascii_len + 3;    // ASCII chars, parentheses and newline
     output_len += 1;                              // null terminator
 
     // Allocate the output string

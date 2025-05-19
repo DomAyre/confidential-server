@@ -107,8 +107,17 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
         return 1;
     }
 
-    fprintf(stderr, "\nSecurity Policy SHA256: \n%s\n", hex_encode(policy_hash, sizeof(snp_report->host_data), 16, NULL));
-    fprintf(stderr, "\nSNP Report Host Data: \n%s\n", hex_encode(snp_report->host_data, sizeof(snp_report->host_data), 16, NULL));
+    // Print policy hash and report host_data in hex, then free buffers
+    char* policy_hex = hex_encode(policy_hash, sizeof(snp_report->host_data), 16, NULL);
+    if (policy_hex) {
+        fprintf(stderr, "\nSecurity Policy SHA256: \n%s\n", policy_hex);
+        free(policy_hex);
+    }
+    char* host_data_hex = hex_encode(snp_report->host_data, sizeof(snp_report->host_data), 16, NULL);
+    if (host_data_hex) {
+        fprintf(stderr, "\nSNP Report Host Data: \n%s\n", host_data_hex);
+        free(host_data_hex);
+    }
 
     if (memcmp(policy_hash, snp_report->host_data, sizeof(snp_report->host_data)) == 0) {
         fprintf(stderr, "\n✔ SNP report's host_data matches the security policy hash\n");
