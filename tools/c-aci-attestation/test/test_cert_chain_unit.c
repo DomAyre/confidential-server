@@ -6,6 +6,8 @@
 #include <openssl/x509.h>
 #include "lib/cert_chain.h"
 #include "lib/host_amd_certs.h"
+#include "lib/base64.h"
+#include "lib/json.h"
 
 static int test_new_and_free(void) {
     cert_chain_t *chain = cert_chain_new();
