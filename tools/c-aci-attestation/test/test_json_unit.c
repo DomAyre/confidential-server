@@ -50,12 +50,58 @@ static int test_missing(void) {
     return 0;
 }
 
+// Test numeric values
+// Test malformed JSON input returns NULL
+static int test_malformed(void) {
+    char *val = get_json_field("{bad json", "foo");
+    if (val) {
+        fprintf(stderr, "[malformed] Expected NULL\n");
+        free(val);
+        return 1;
+    }
+    printf("[PASS] malformed JSON returns NULL\n");
+    return 0;
+}
+
+// Test unescape_json behavior for escape sequences
+static int test_unescape(void) {
+    const char *s = "Line1\\nLine2\\r\\\\End";
+    char *out = unescape_json(s);
+    if (!out) {
+        fprintf(stderr, "[unescape] NULL output\n");
+        return 1;
+    }
+    if (strcmp(out, "Line1\nLine2\r\\End") != 0) {
+        fprintf(stderr, "[unescape] FAILED: got '%s'\n", out);
+        free(out);
+        return 1;
+    }
+    free(out);
+    printf("[PASS] unescape_json conversion\n");
+    return 0;
+}
+
+// Test unescape_json NULL input returns NULL
+static int test_unescape_null(void) {
+    char *out = unescape_json(NULL);
+    if (out) {
+        fprintf(stderr, "[unescape_null] Expected NULL\n");
+        free(out);
+        return 1;
+    }
+    printf("[PASS] unescape_json(NULL) returns NULL\n");
+    return 0;
+}
+
 int main(void) {
     // Declare test suite
     printf("=== test_json_unit ===\n");
     if (test_simple()) return 1;
     if (test_spaces()) return 1;
     if (test_missing()) return 1;
+    if (test_malformed()) return 1;
+    if (test_unescape()) return 1;
+    if (test_unescape_null()) return 1;
     printf("All tests passed\n");
     return 0;
 }

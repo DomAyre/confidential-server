@@ -2,6 +2,11 @@ CC := gcc
 CFLAGS := -Wall -Wextra -O2 -Isrc/core
 LDFLAGS := -lcrypto -lm
 
+ifeq ($(COVERAGE),1)
+CFLAGS += --coverage -O0
+LDFLAGS += --coverage
+endif
+
 ifdef ASAN
 CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -g
 LDFLAGS += -fsanitize=address
@@ -37,6 +42,17 @@ $(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR)
 # Phony targets for individual programs
 $(BINS): %: $(BUILD_DIR)/%
 
+
+lint_deps:
+	@echo "Installing lint dependencies..."
+	@sudo apt-get update && sudo apt-get install -y \
+		clang-tidy
+
+coverage_deps:
+	@echo "Installing test dependencies..."
+	@sudo apt-get update && sudo apt-get install -y \
+		lcov
+
 test: test_unit test_system test_python test_docker
 	@echo "All tests passed"
 
@@ -65,9 +81,18 @@ test_python: all python
 	pytest -q test/python
 
 # Static analysis
-lint:
+lint: lint_deps
 	@echo "Running clang-tidy over C sources..."
 	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
+  
+coverage: coverage_deps
+	-@$(MAKE) clean
+	-@$(MAKE) COVERAGE=1 test_unit
+	@echo "Capturing coverage data..."
+	@lcov --capture --directory $(BUILD_DIR) --output-file $(BUILD_DIR)/coverage.info
+	@echo "Generating HTML report..."
+	@genhtml $(BUILD_DIR)/coverage.info --output-directory $(BUILD_DIR)/coverage_html
+	@echo "Coverage report generated in $(BUILD_DIR)/coverage_html/index.html"
 
 asan:
 	$(MAKE) ASAN=1 test_system

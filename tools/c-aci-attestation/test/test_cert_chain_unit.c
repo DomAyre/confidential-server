@@ -5,6 +5,7 @@
 #include <openssl/stack.h>
 #include <openssl/x509.h>
 #include "lib/cert_chain.h"
+#include "lib/host_amd_certs.h"
 
 static int test_new_and_free(void) {
     cert_chain_t *chain = cert_chain_new();
@@ -63,12 +64,25 @@ static int test_add_pem_chain_invalid(void) {
     return 0;
 }
 
+// Test null inputs for all APIs
+static int test_null_inputs(void) {
+    cert_chain_free(NULL);
+    if (cert_chain_add_pem(NULL, "x") == 0) return 1;
+    if (cert_chain_add_pem_chain(NULL, "x") == 0) return 1;
+    if (cert_chain_get_stack(NULL)) return 1;
+    if (cert_chain_validate(NULL, 0) == 0) return 1;
+    if (cert_chain_validate_root(NULL, NULL) == 0) return 1;
+    printf("[PASS] null input error paths\n");
+    return 0;
+}
+
 int main(void) {
     // Declare test suite
     printf("=== test_cert_chain_unit ===\n");
     if (test_new_and_free()) return 1;
     if (test_add_invalid_pem()) return 1;
     if (test_add_pem_chain_invalid()) return 1;
+    if (test_null_inputs()) return 1;
     printf("All tests passed\n");
     return 0;
 }
