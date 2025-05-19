@@ -45,7 +45,7 @@ static int parse_protected_header(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
         fprintf(stderr, "✘ Failed to allocate memory for COSE_Sign1 protected header\n");
         return 1;
     }
-    memset(cose_sign1->protected_header, 0, sizeof(COSE_Sign1_Protected_Header)); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+    memset(cose_sign1->protected_header, 0, sizeof(COSE_Sign1_Protected_Header));
 
     QCBORDecodeContext protected_header_ctx;
     QCBORDecode_Init(&protected_header_ctx, *msg, QCBOR_DECODE_MODE_NORMAL);
@@ -65,7 +65,7 @@ static int parse_protected_header(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
       END_INDEX
     };
     QCBORItem header_items[END_INDEX + 1];
-    memset(header_items, 0, sizeof(header_items)); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+    memset(header_items, 0, sizeof(header_items));
     header_items[ALG_INDEX].label.int64 = 1;
     header_items[ALG_INDEX].uLabelType = QCBOR_TYPE_INT64;
     header_items[ALG_INDEX].uDataType = QCBOR_TYPE_INT64;
@@ -162,7 +162,7 @@ static int parse_payload(UsefulBufC* msg, COSE_Sign1* cose_sign1) {
     }
 
     cose_sign1->payload = malloc(payload.val.string.len + 1);
-    memcpy(cose_sign1->payload, payload.val.string.ptr, payload.val.string.len); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+    memcpy(cose_sign1->payload, payload.val.string.ptr, payload.val.string.len);
     cose_sign1->payload[payload.val.string.len] = '\0';
 
     QCBORDecode_ExitArray(&ctx);
@@ -184,7 +184,7 @@ COSE_Sign1* cose_sign1_new(const uint8_t* buf, size_t len) {
         fprintf(stderr, "✘ Failed to allocate memory for COSE_Sign1 structure\n");
         return NULL;
     }
-    memset(cose_sign1, 0, sizeof(COSE_Sign1)); // NOLINT(clang-analyzer-security.insecureAPI.DeprecatedOrUnsafeBufferHandling)
+    memset(cose_sign1, 0, sizeof(COSE_Sign1));
 
     cose_sign1->raw = malloc(len);
     cose_sign1->raw->ptr = buf;
