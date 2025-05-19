@@ -36,6 +36,17 @@ $(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR)
 # Phony targets for individual programs
 $(BINS): %: $(BUILD_DIR)/%
 
+
+lint_deps:
+	@echo "Installing lint dependencies..."
+	@apt-get update && apt-get install -y \
+		clang-tidy
+
+coverage_deps:
+	@echo "Installing test dependencies..."
+	@apt-get update && apt-get install -y \
+		lcov
+
 test: test_unit test_system test_python test_docker
 	@echo "All tests passed"
 
@@ -64,11 +75,11 @@ test_python: all python
 	pytest -q test/python
 
 # Static analysis
-lint:
+lint: lint_deps
 	@echo "Running clang-tidy over C sources..."
 	@clang-tidy $(SRC_DIR)/lib/*.c -- -I$(SRC_DIR)
 
-coverage:
+coverage: coverage_deps
 	-@$(MAKE) clean
 	-@$(MAKE) COVERAGE=1 test_unit
 	@echo "Capturing coverage data..."
