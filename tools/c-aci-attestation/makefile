@@ -1,236 +1,143 @@
-DEPS_DIR := tools/cose-deps
-TCOSE_DIR := $(DEPS_DIR)/t_cose
-QCBOR_DIR := $(DEPS_DIR)/qcbor
-CC := gcc
-CFLAGS := -Wall -Wextra -O2 -Isrc/core \
-          -I$(TCOSE_DIR)/inc -I$(TCOSE_DIR)/src \
-          -I$(QCBOR_DIR)/inc \
-          -DT_COSE_USE_OPENSSL_CRYPTO=1
-LDFLAGS := -lcrypto -lm
+# Core Definitions -------------------------------------------------------------
 
-ifeq ($(COVERAGE),1)
-CFLAGS += --coverage -O0
-LDFLAGS += --coverage
-endif
-
-ifdef ASAN
-CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -g
-LDFLAGS += -fsanitize=address
-export ASAN_OPTIONS = detect_leaks=1:print_summary=1
-endif
-
-BUILD_DIR := build
+# Directories
 SRC_DIR := src/core
+LIB_DIR := $(SRC_DIR)/lib
+BUILD_DIR := build
 TEST_DIR := test
+TOOLS_DIR := tools
+T_COSE_DIR := $(TOOLS_DIR)/t_cose
+QCBOR_DIR := $(TOOLS_DIR)/qcbor
 
-CORE_SRCS := $(wildcard $(SRC_DIR)/*.c)
-BINS := $(notdir $(CORE_SRCS:.c=))
-BIN_PATHS := $(addprefix $(BUILD_DIR)/,$(BINS))
-COSE_SRCS := \
-    $(TCOSE_DIR)/src/t_cose_sign1_verify.c \
-    $(TCOSE_DIR)/src/t_cose_util.c \
-    $(TCOSE_DIR)/src/t_cose_parameters.c \
-    $(TCOSE_DIR)/src/t_cose_short_circuit.c \
-    $(TCOSE_DIR)/crypto_adapters/t_cose_openssl_crypto.c \
+# Files
+SRCS := $(wildcard $(SRC_DIR)/*.c)
+TEST_SRC := $(wildcard $(TEST_DIR)/test_*_unit.c)
+T_COSE_SRCS := \
+    $(T_COSE_DIR)/src/t_cose_sign1_verify.c \
+    $(T_COSE_DIR)/src/t_cose_util.c \
+    $(T_COSE_DIR)/src/t_cose_parameters.c \
+    $(T_COSE_DIR)/src/t_cose_short_circuit.c \
+	$(T_COSE_DIR)/crypto_adapters/t_cose_openssl_crypto.c
+QCBOR_SRCS := \
     $(QCBOR_DIR)/src/qcbor_decode.c \
     $(QCBOR_DIR)/src/qcbor_encode.c \
     $(QCBOR_DIR)/src/UsefulBuf.c \
     $(QCBOR_DIR)/src/ieee754.c
-LIB_SRCS := $(wildcard $(SRC_DIR)/lib/*.c) $(wildcard $(SRC_DIR)/lib/*.S) $(COSE_SRCS)
-TEST_BINARIES := \
-    $(BUILD_DIR)/test_base64_unit \
-    $(BUILD_DIR)/test_hex_unit \
-    $(BUILD_DIR)/test_files_unit \
-    $(BUILD_DIR)/test_sha256_unit \
-    $(BUILD_DIR)/test_json_unit \
-    $(BUILD_DIR)/test_cert_chain_unit \
-    $(BUILD_DIR)/test_host_amd_certs_unit \
-    $(BUILD_DIR)/test_snp_report_unit \
-    $(BUILD_DIR)/test_uvm_endorsements_unit \
+LIB_SRCS := \
+	$(wildcard $(LIB_DIR)/*.c) \
+	$(wildcard $(LIB_DIR)/*.S) \
+	$(T_COSE_SRCS) \
+	$(QCBOR_SRCS)
+BINS := $(addprefix $(BUILD_DIR)/,$(notdir $(SRCS:.c=)))
+TEST_BINS := $(addprefix $(BUILD_DIR)/,$(notdir $(TEST_SRC:.c=)))
 
-DEPS := deps
-.PHONY: all clean test test_unit test_python lint $(BINS) $(DEPS) asan
+# Compiler
+CC := gcc
+CFLAGS := -Wall -Wextra -O2 \
+	-Isrc/core \
+	-I$(QCBOR_DIR)/inc \
+	-I$(T_COSE_DIR)/inc -I$(T_COSE_DIR)/src \
+	-DT_COSE_USE_OPENSSL_CRYPTO=1
+LDFLAGS := -lcrypto -lm
 
-all: $(DEPS) $(BIN_PATHS)
+ifdef COVERAGE
+	CFLAGS += --coverage -O0
+	LDFLAGS += --coverage
+endif
 
-compile-commands:
-	@echo "Generating compile_commands.json with bear..."
-	@bear -- make clean all
+ifdef ASAN
+	CFLAGS  += -fsanitize=address -fno-omit-frame-pointer -g
+	LDFLAGS += -fsanitize=address
+	export ASAN_OPTIONS = detect_leaks=1:print_summary=1
+endif
 
-docker:
-	@docker compose build
+# Default target ---------------------------------------------------------------
 
-python:
-	@(cd src/bindings/python/ && python3 -m pip install -e .)
+all: core bindings
+
+clean:
+	rm -rf $(BUILD_DIR)
+
+# Building C library -----------------------------------------------------------
+
+core: $(TOOLS_DIR) $(BINS)
 
 $(BUILD_DIR):
 	@mkdir -p $(BUILD_DIR)
 
-$(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR) $(DEPS)
+$(TOOLS_DIR):
+	@mkdir -p $(TOOLS_DIR)
+	@if [ ! -d "$(T_COSE_DIR)" ]; then \
+		git clone --recursive https://github.com/laurencelundblade/t_cose.git \
+			$(T_COSE_DIR); \
+	fi
+	@if [ ! -d "$(QCBOR_DIR)" ]; then \
+		git clone https://github.com/laurencelundblade/qcbor.git \
+			$(QCBOR_DIR); \
+	fi
+
+$(BUILD_DIR)/%: $(SRC_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR) $(TOOLS_DIR)
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Link QCBOR spiffy decode if present (for newer QCBOR)
-ifeq (,$(wildcard $(QCBOR_DIR)/src/qcbor_spiffy_decode.c))
-# No spiffy decode source file, do nothing
-else
-LIB_SRCS += $(QCBOR_DIR)/src/qcbor_spiffy_decode.c
-endif
+$(BUILD_DIR)/test_%_unit: $(TEST_DIR)/test_%_unit.c $(LIB_DIR)/%.c $(LIB_SRCS) | $(BUILD_DIR) $(TOOLS_DIR)
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-# Phony targets for individual programs
-$(BINS): %: $(BUILD_DIR)/%
+# Building Bindings ------------------------------------------------------------
 
+bindings: python docker
 
-lint_deps: deps
-	@echo "Installing lint dependencies..."
-	@sudo apt-get update && sudo apt-get install -y \
-		clang-tidy
+python: core
+	python3 -m pip install -e src/bindings/python
 
-coverage_deps:
-	@echo "Installing test dependencies..."
-	@sudo apt-get update && sudo apt-get install -y \
-		lcov
+docker: core
+	docker compose build
 
-test: test_unit test_system test_python test_docker
-	@echo "All tests passed"
+# Testing ----------------------------------------------------------------------
 
-test_unit: $(TEST_BINARIES)
-	@$(BUILD_DIR)/test_base64_unit
-	@$(BUILD_DIR)/test_hex_unit
-	@$(BUILD_DIR)/test_files_unit
-	@$(BUILD_DIR)/test_sha256_unit
-	@$(BUILD_DIR)/test_json_unit
-	@$(BUILD_DIR)/test_cert_chain_unit
-	@$(BUILD_DIR)/test_host_amd_certs_unit
-	@$(BUILD_DIR)/test_snp_report_unit
-	@$(BUILD_DIR)/test_uvm_endorsements_unit
+lint: $(TOOLS_DIR)
+	@if ! command -v clang-tidy >/dev/null 2>&1; then \
+		sudo apt-get update -qq && sudo apt-get install -y -qq clang-tidy; \
+	fi
+	clang-tidy $(LIB_DIR)/*.c -- $(CFLAGS)
+	@echo "Linting complete."
 
-test_system: all
+test: test-unit test-system test
+
+test-unit: $(TOOLS_DIR) $(TEST_BINS)
+	@for bin in $(TEST_BINS); do \
+		$$bin || exit 1; \
+	done
+
+test-system: core
 	./build/get_attestation_ccf "example-report-data" \
 		| xargs -0 ./build/verify_attestation_ccf \
 			--report-data "example-report-data" \
 			--security-policy-b64 "$$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
 
-test_docker: all docker
-	docker compose up --build --abort-on-container-failure
-
-test_python: all python
-	@echo "Running Python pytest suite..."
-	pip install -r test/python/requirements.txt
-	pytest -q test/python
-
-lint: lint_deps
-	@echo "Running clang-tidy over C sources..."
-	@clang-tidy -p compile_commands.json $(SRC_DIR)/lib/*.c -- $(CFLAGS)
-
-coverage: coverage_deps
-	-@$(MAKE) clean
-	-@$(MAKE) COVERAGE=1 test_unit
-	@echo "Capturing coverage data..."
-	@lcov --capture --directory $(BUILD_DIR) --output-file $(BUILD_DIR)/coverage.info
-	@echo "Generating HTML report..."
-	@genhtml $(BUILD_DIR)/coverage.info --output-directory $(BUILD_DIR)/coverage_html
-	@echo "Coverage report generated in $(BUILD_DIR)/coverage_html/index.html"
-
-asan:
-	$(MAKE) ASAN=1 test_system
-
-test_aci:
+test-aci:
 	c-aci-testing target run . \
 		--policy-type "allow_all" \
 		--deployment-name "test-aci"
 
-deps:
-	@mkdir -p $(DEPS_DIR)
-	@echo "Fetching t_cose into $(TCOSE_DIR)..."
-	@if [ ! -d "$(TCOSE_DIR)" ]; then git clone --recursive https://github.com/laurencelundblade/t_cose.git $(TCOSE_DIR); fi
-	@echo "Fetching QCBOR into $(QCBOR_DIR)..."
-	@if [ ! -d "$(QCBOR_DIR)" ]; then git clone https://github.com/laurencelundblade/qcbor.git $(QCBOR_DIR); fi
+test-bindings: test-python test-docker
 
-$(BUILD_DIR)/test_base64_unit: $(TEST_DIR)/test_base64_unit.c $(SRC_DIR)/lib/base64.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_base64_unit.c \
-		$(SRC_DIR)/lib/base64.c \
-		$(LDFLAGS)
+test-python: python
+	@echo "Running python tests..."
+	pip install -r test/python/requirements.txt
+	pytest -q test/python
 
-# Unit tests for other core libraries
-$(BUILD_DIR)/test_hex_unit: $(TEST_DIR)/test_hex_unit.c $(SRC_DIR)/lib/hex.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_hex_unit.c \
-		$(SRC_DIR)/lib/hex.c \
-		$(LDFLAGS)
+test-docker: docker
+	@echo "Running docker tests..."
+	docker compose up --build --abort-on-container-failure
 
-$(BUILD_DIR)/test_files_unit: $(TEST_DIR)/test_files_unit.c $(SRC_DIR)/lib/files.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_files_unit.c \
-		$(SRC_DIR)/lib/files.c \
-		$(LDFLAGS)
+coverage: clean
+	@if ! command -v lcov >/dev/null 2>&1; then \
+		sudo apt-get update -qq && sudo apt-get install -y -qq lcov; \
+	fi
+	-@$(MAKE) COVERAGE=1 test-unit
+	@lcov --capture --directory build --output-file build/coverage.info
+	@lcov --extract build/coverage.info '*/src/core/lib/*' --output-file build/coverage_filtered.info
+	@genhtml build/coverage_filtered.info --output-directory build/coverage_html
 
-$(BUILD_DIR)/test_sha256_unit: $(TEST_DIR)/test_sha256_unit.c $(SRC_DIR)/lib/sha256.c $(SRC_DIR)/lib/hex.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_sha256_unit.c \
-		$(SRC_DIR)/lib/sha256.c \
-		$(SRC_DIR)/lib/hex.c \
-		$(LDFLAGS)
-
-$(BUILD_DIR)/test_json_unit: $(TEST_DIR)/test_json_unit.c $(SRC_DIR)/lib/json.c | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_json_unit.c \
-		$(SRC_DIR)/lib/json.c \
-		$(LDFLAGS)
-
-$(BUILD_DIR)/test_cert_chain_unit: \
-    $(TEST_DIR)/test_cert_chain_unit.c \
-    $(SRC_DIR)/lib/cert_chain.c \
-    $(SRC_DIR)/lib/json.c \
-    $(SRC_DIR)/lib/base64.c \
-    $(SRC_DIR)/lib/host_amd_certs.c \
-    $(SRC_DIR)/lib/files.c \
-    $(SRC_DIR)/lib/snp_report.c \
-    $(SRC_DIR)/lib/sha256.c \
-    $(SRC_DIR)/lib/embedded_examples.S | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_cert_chain_unit.c \
-		$(SRC_DIR)/lib/cert_chain.c \
-		$(SRC_DIR)/lib/json.c \
-		$(SRC_DIR)/lib/base64.c \
-		$(SRC_DIR)/lib/host_amd_certs.c \
-		$(SRC_DIR)/lib/files.c \
-		$(SRC_DIR)/lib/snp_report.c \
-		$(SRC_DIR)/lib/sha256.c \
-		$(SRC_DIR)/lib/embedded_examples.S \
-		$(LDFLAGS)
-
-# Unit test for host_amd_certs
-$(BUILD_DIR)/test_host_amd_certs_unit: $(TEST_DIR)/test_host_amd_certs_unit.c $(SRC_DIR)/lib/host_amd_certs.c $(SRC_DIR)/lib/json.c $(SRC_DIR)/lib/base64.c $(SRC_DIR)/lib/files.c $(SRC_DIR)/lib/embedded_examples.S | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_host_amd_certs_unit.c \
-		$(SRC_DIR)/lib/host_amd_certs.c \
-		$(SRC_DIR)/lib/json.c \
-		$(SRC_DIR)/lib/base64.c \
-		$(SRC_DIR)/lib/files.c \
-		$(SRC_DIR)/lib/embedded_examples.S \
-		$(LDFLAGS)
-
-
-# Unit test for snp_report
-$(BUILD_DIR)/test_snp_report_unit: $(TEST_DIR)/test_snp_report_unit.c $(SRC_DIR)/lib/snp_report.c $(SRC_DIR)/lib/base64.c $(SRC_DIR)/lib/embedded_examples.S | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_snp_report_unit.c \
-		$(SRC_DIR)/lib/snp_report.c \
-		$(SRC_DIR)/lib/base64.c \
-		$(SRC_DIR)/lib/embedded_examples.S \
-		$(LDFLAGS)
-
-
-$(BUILD_DIR)/test_uvm_endorsements_unit: $(TEST_DIR)/test_uvm_endorsements_unit.c $(SRC_DIR)/lib/uvm_endorsements.c $(SRC_DIR)/lib/base64.c $(SRC_DIR)/lib/files.c $(SRC_DIR)/lib/embedded_examples.S | $(BUILD_DIR)
-	$(CC) $(CFLAGS) -o $@ \
-		$(TEST_DIR)/test_uvm_endorsements_unit.c \
-		$(SRC_DIR)/lib/uvm_endorsements.c \
-		$(SRC_DIR)/lib/base64.c \
-		$(SRC_DIR)/lib/files.c \
-		$(SRC_DIR)/lib/embedded_examples.S \
-		$(LDFLAGS)
-
-
-clean:
-	rm -rf $(BUILD_DIR) $(DEPS_DIR)
+asan: clean
+	$(MAKE) ASAN=1 test-system

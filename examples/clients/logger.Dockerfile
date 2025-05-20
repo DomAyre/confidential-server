@@ -5,7 +5,7 @@ ARG CONF_SERVER_URL="http://localhost:5000"
 # Install curl
 RUN apt-get update && apt-get install -y curl
 
-# Install the wrappying_key tool
+# Install the wrapping_key tool
 COPY tools/encryption_wrapper/requirements.txt /usr/local/bin/encryption_wrapper/requirements.txt
 RUN pip install -r /usr/local/bin/encryption_wrapper/requirements.txt
 COPY tools/encryption_wrapper /usr/local/bin/encryption_wrapper
@@ -13,7 +13,7 @@ RUN chmod +x -R /usr/local/bin/encryption_wrapper
 
 # Install the attestation package
 COPY tools/c-aci-attestation/ /src/c-aci-attestation
-RUN make -C /src/c-aci-attestation clean all python
+RUN make -C /src/c-aci-attestation clean python
 
 ENV CONF_SERVER_URL=${CONF_SERVER_URL}
 ENV PATH="/opt/venv/bin:$PATH"

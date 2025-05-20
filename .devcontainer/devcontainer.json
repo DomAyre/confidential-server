@@ -57,6 +57,6 @@
 			}
 		}
 	},
-	"postCreateCommand": "find . -name requirements.txt -exec pip install -r {} \\;",
+	"postCreateCommand": "find . -name requirements.txt -exec pip install -r {} \\; make -C tools/c-aci-attestation",
 	"postStartCommand": "docker buildx create --use --bootstrap"
 }

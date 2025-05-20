@@ -73,7 +73,7 @@ This will lint the C code, and run unit tests, test the roundtrip of getting a v
 You can also run this roundtrip test in real C-ACI, with:
 
 ```
-make test_aci
+make test-aci
 ```
 
 This will take slightly longer than the other tests, which is why it isn't run implicitly.
