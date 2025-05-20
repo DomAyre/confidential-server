@@ -1,7 +1,40 @@
 import json
-from attestation import get_snp_version, get_attestation_ccf, verify_attestation_ccf
 import os
 from base64 import b64encode
+import subprocess
+import sys
+from itertools import chain
+
+
+def execute_module(module_name, *args, **kwargs):
+    return subprocess.run(
+        [
+            sys.executable,
+            '-m',
+            f'attestation.{module_name}',
+            *args,
+            *(list(chain.from_iterable(zip([f'--{k.replace('_', "-")}' for k in kwargs.keys()], list(kwargs.values())))) if kwargs else []),
+        ],
+        stdout=subprocess.PIPE,
+        text=True
+    )
+
+
+def get_snp_version():
+    return execute_module('get_snp_version').stdout.strip()
+
+
+def get_attestation_ccf(report_data: str = '') -> str:
+    return execute_module('get_attestation_ccf', report_data).stdout.strip()
+
+
+def verify_attestation_ccf(ccf_attestation: str, report_data: str = '', security_policy_b64: str = '') -> bool:
+    return execute_module(
+        'verify_attestation_ccf',
+        ccf_attestation,
+        report_data=report_data,
+        security_policy_b64=security_policy_b64,
+    ).returncode == 0
 
 
 def get_security_policy_b64():
