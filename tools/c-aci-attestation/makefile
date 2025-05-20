@@ -103,7 +103,7 @@ lint: $(TOOLS_DIR)
 
 test: test-unit test-system test
 
-test-unit: $(TEST_BINS)
+test-unit: $(TOOLS_DIR) $(TEST_BINS)
 	@for bin in $(TEST_BINS); do \
 		$$bin || exit 1; \
 	done
