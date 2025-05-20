@@ -11,7 +11,7 @@ services:
           apt-get install -y make gcc openssl libssl-dev git && \
           rm -rf /var/lib/apt/lists/*
         COPY . /src
-        RUN make -C /src clean all && cp /src/build/* /usr/local/bin
+        RUN make -C /src clean core && cp /src/build/* /usr/local/bin
     command: |
       /bin/bash -c '
         get_snp_version
