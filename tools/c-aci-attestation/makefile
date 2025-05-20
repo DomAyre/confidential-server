@@ -94,7 +94,7 @@ docker: core
 
 # Testing ----------------------------------------------------------------------
 
-lint:
+lint: $(TOOLS_DIR)
 	@if ! command -v clang-tidy >/dev/null 2>&1; then \
 		sudo apt-get update -qq && sudo apt-get install -y -qq clang-tidy; \
 	fi
