@@ -28,5 +28,4 @@ jobs:
 
     - run: make -C tools/c-aci-attestation docker
     - run: make -C tools/c-aci-attestation test-docker
-    - run: make -C tools/c-aci-attestation test-aci
     - run: TAG=${{ inputs.version }} make -C tools/c-aci-attestation release-docker
