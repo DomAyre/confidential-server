@@ -1,7 +1,7 @@
 services:
 
   attestation:
-    image: ghcr.io/domayre/confidential-server/attestation:latest
+    image: ghcr.io/domayre/confidential-server/attestation:${TAG:-latest}
     platform: linux/amd64
     build:
       context: .

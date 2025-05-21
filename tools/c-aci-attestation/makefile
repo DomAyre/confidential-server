@@ -114,10 +114,15 @@ test-system: core
 			--report-data "example-report-data" \
 			--security-policy-b64 "$$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
 
+DEPLOYMENT_NAME ?= test-aci
 test-aci:
-	c-aci-testing target run . \
+	@if ! command -v c-aci-testing >/dev/null 2>&1; then \
+		../c-aci-testing/install.sh; \
+	fi
+	. ../c-aci-testing/.env && c-aci-testing target run . \
 		--policy-type "allow_all" \
-		--deployment-name "test-aci"
+		--deployment-name $(DEPLOYMENT_NAME) | tee /tmp/logs.txt
+	@grep -q "Attestation validation successful" /tmp/logs.txt
 
 test-bindings: test-python test-docker
 
@@ -141,3 +146,8 @@ coverage: clean
 
 asan: clean
 	$(MAKE) ASAN=1 test-system
+
+# Release ----------------------------------------------------------------------
+
+release-docker: docker
+	docker compose push
