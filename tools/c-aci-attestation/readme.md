@@ -44,19 +44,36 @@ These sample values were captured on an C-ACI instance running a version of the 
 You can also run the verification code against a generated report, just ensure the format of the attestation (which follows the `get_attestation_` part of the binary name). For example:
 
 ```
-./build/get_attestation_ccf "example-report-data" \
-    | xargs -0 ./build/verify_attestation_ccf \
-        --report-data "example-report-data" \
-        --security-policy-b64 "$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
+attestation=$(./build/get_attestation_ccf "example-report-data")
+
+./build/verify_attestation_ccf \
+    --report-data "example-report-data" \
+    --security-policy-b64 "$(cat examples/security_policies/allow_all.rego | base64 -w 0)" \
+    "$attestation"
 ```
 
 ### Python package
 
 ```
-python -m attestation.get_attestation_ccf "example-report-data" \
-    | xargs -0 python -m attestation.verify_attestation_ccf \
-        --report-data "example-report-data" \
-        --security-policy-b64 "$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
+attestation=$(python -m attestation.get_attestation_ccf "example-report-data")
+
+python -m attestation.verify_attestation_ccf \
+    --report-data "example-report-data" \
+    --security-policy-b64 "$(cat examples/security_policies/allow_all.rego | base64 -w 0)" \
+    "$attestation"
+```
+
+### Docker image
+
+```
+image="ghcr.io/domayre/confidential-server/attestation:latest"
+
+attestation=$(docker run $image get_attestation_ccf "example-report-data")
+
+docker run $image verify_attestation_ccf \
+    --report-data "example-report-data" \
+    --security-policy-b64 "$(cat examples/security_policies/allow_all.rego | base64 -w 0)" \
+    "$attestation"
 ```
 
 ## Contributing
