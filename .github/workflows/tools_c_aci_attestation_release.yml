@@ -8,8 +8,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       packages: write
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - uses: actions/checkout@v4
 
@@ -22,6 +20,4 @@ jobs:
 
     - run: make -C tools/c-aci-attestation docker
     - run: make -C tools/c-aci-attestation test-docker
-    - env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: make -C tools/c-aci-attestation release-docker
+    - run: make -C tools/c-aci-attestation release-docker
