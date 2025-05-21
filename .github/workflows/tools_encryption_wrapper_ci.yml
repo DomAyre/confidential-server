@@ -1,0 +1,31 @@
+name: Encryption Wrapper
+
+on:
+  workflow_call:
+
+env:
+  PYTHONPATH: ${{ github.workspace }}/tools
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
+    - run: ruff check tools/encryption_wrapper --exclude tools/
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+    - uses: actions/checkout@v4
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
+    - run: pytest -sv tools/encryption_wrapper/test
+
+  coverage:
+    runs-on: ubuntu-latest
+    needs: test
+    steps:
+    - uses: actions/checkout@v4
+    - run: pip install -r test/requirements.txt -r tools/**/requirements.txt
+    - run: pytest --cov=tools/encryption_wrapper --cov-fail-under=90 tools/encryption_wrapper
