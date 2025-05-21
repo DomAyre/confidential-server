@@ -114,10 +114,12 @@ test-system: core
 			--report-data "example-report-data" \
 			--security-policy-b64 "$$(cat examples/security_policies/allow_all.rego | base64 -w 0)"
 
+DEPLOYMENT_NAME ?= test-aci
 test-aci:
 	c-aci-testing target run . \
 		--policy-type "allow_all" \
-		--deployment-name "test-aci"
+		--deployment-name $(DEPLOYMENT_NAME) | tee /tmp/logs.txt
+	@grep -q "Attestation validation successful" /tmp/logs.txt
 
 test-bindings: test-python test-docker
 
