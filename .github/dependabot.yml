@@ -12,11 +12,9 @@ updates:
       interval: daily
       time: "13:00"
     open-pull-requests-limit: 10
-    reviewers:
-    - domayre
     allow:
-    - dependency-type: direct
-    - dependency-type: indirect
+      - dependency-type: direct
+      - dependency-type: indirect
     commit-message:
       prefix: "fix: "
   - package-ecosystem: "github-actions"
