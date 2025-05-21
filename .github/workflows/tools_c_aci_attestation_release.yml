@@ -24,4 +24,3 @@ jobs:
         context: tools/c-aci-attestation
         file: compose.yml
         push: true
-        tags: ghcr.io/${{ github.repository_owner }}/confidential-server/attestation:latest
