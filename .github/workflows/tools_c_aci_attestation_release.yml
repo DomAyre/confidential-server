@@ -1,0 +1,27 @@
+name: C-ACI Attestation
+
+on:
+  workflow_call:
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - run: make docker
+
+    - name: Log in to GitHub Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: ghcr.io
+        username: ${{ github.repository_owner }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Build and push Docker image
+      uses: docker/build-push-action@v5
+      with:
+        context: tools/c-aci-attestation
+        file: compose.yml
+        push: true
+        tags: ghcr.io/${{ github.repository_owner }}/confidential-server/attestation:latest
