@@ -7,7 +7,4 @@ on:
 
 jobs:
   c-aci-attestation:
-    permissions:
-      packages: write
-    secrets: inherit
     uses: ./.github/workflows/tools_c_aci_attestation_release.yml

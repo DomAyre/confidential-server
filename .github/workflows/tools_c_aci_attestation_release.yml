@@ -4,10 +4,8 @@ on:
   workflow_call:
 
 jobs:
-  release:
+  release-docker:
     runs-on: ubuntu-latest
-    permissions:
-      packages: write
     steps:
     - uses: actions/checkout@v4
 
