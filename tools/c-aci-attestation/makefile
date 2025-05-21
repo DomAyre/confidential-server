@@ -116,7 +116,10 @@ test-system: core
 
 DEPLOYMENT_NAME ?= test-aci
 test-aci:
-	c-aci-testing target run . \
+	@if ! command -v c-aci-testing >/dev/null 2>&1; then \
+		../c-aci-testing/install.sh; \
+	fi
+	. ../c-aci-testing/.env && c-aci-testing target run . \
 		--policy-type "allow_all" \
 		--deployment-name $(DEPLOYMENT_NAME) | tee /tmp/logs.txt
 	@grep -q "Attestation validation successful" /tmp/logs.txt
