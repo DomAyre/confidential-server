@@ -11,6 +11,7 @@ on:
 env:
   TAG: ${{ github.run_id }}-${{ github.run_attempt }} # Use a dummy tag when testing
   DEPLOYMENT_NAME: ${{ github.run_id }}-${{ github.run_attempt }}
+  GH_TOKEN: ${{ github.token }}
 
 jobs:
   release-docker:
