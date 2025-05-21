@@ -5,28 +5,9 @@ on:
   release:
     types: [created]
 
-permissions:
-  packages: write
-
 jobs:
-  # c-aci-attestation:
-  #   permissions:
-  #     packages: write
-  #   secrets: inherit
-  #   uses: ./.github/workflows/tools_c_aci_attestation_release.yml
-
-  test-release:
-    runs-on: ubuntu-latest
-    steps:
-
-    - uses: actions/checkout@v4
-
-    - uses: docker/login-action@v3
-      with:
-        registry: ghcr.io
-        username: ${{ github.repository_owner }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-
-    - run: make -C tools/c-aci-attestation docker
-    - run: make -C tools/c-aci-attestation test-docker
-    - run: make -C tools/c-aci-attestation release-docker
+  c-aci-attestation:
+    permissions:
+      packages: write
+    secrets: inherit
+    uses: ./.github/workflows/tools_c_aci_attestation_release.yml
