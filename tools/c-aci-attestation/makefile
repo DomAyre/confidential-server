@@ -141,3 +141,8 @@ coverage: clean
 
 asan: clean
 	$(MAKE) ASAN=1 test-system
+
+# Release ----------------------------------------------------------------------
+
+release-docker: docker
+	docker compose push
