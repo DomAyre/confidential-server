@@ -10,6 +10,7 @@ on:
 
 env:
   TAG: ${{ github.run_id }}-${{ github.run_attempt }} # Use a dummy tag when testing
+  DEPLOYMENT_NAME: ${{ github.run_id }}-${{ github.run_attempt }}
 
 jobs:
   release-docker:
@@ -26,9 +27,5 @@ jobs:
 
     - run: make -C tools/c-aci-attestation docker
     - run: make -C tools/c-aci-attestation test-docker
-
-    - run: |
-        . tools/c-aci-testing/.env
-        DEPLOYMENT_NAME=$TAG make -C tools/c-aci-attestation test-aci
-
+    - run: make -C tools/c-aci-attestation test-aci
     - run: TAG=${{ inputs.version }} make -C tools/c-aci-attestation release-docker
