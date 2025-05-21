@@ -22,4 +22,6 @@ jobs:
 
     - run: make -C tools/c-aci-attestation docker
     - run: make -C tools/c-aci-attestation test-docker
-    - run: make -C tools/c-aci-attestation release-docker
+    - env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: make -C tools/c-aci-attestation release-docker
