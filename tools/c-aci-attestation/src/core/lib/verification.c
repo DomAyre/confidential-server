@@ -10,6 +10,7 @@
 #include "sha256.h"
 #include "hex.h"
 #include "json.h"
+#include "attestation_errors.h"
 #include <unistd.h>
 
 const char* amd_public_key_pem =
@@ -43,7 +44,7 @@ int verify_snp_report_is_genuine(SnpReport* snp_report, cert_chain_t* cert_chain
         fprintf(stderr, "✔ Certificates signature chain valid\n");
     } else {
         fprintf(stderr, "✘ Certificates signature chain invalid\n");
-        return 1;
+        return ATTESTATION_ERROR_CERT_CHAIN_INVALID;
     }
 
     EVP_PKEY* amd_public_key = pem_to_pub_key(amd_public_key_pem);
@@ -51,7 +52,7 @@ int verify_snp_report_is_genuine(SnpReport* snp_report, cert_chain_t* cert_chain
         fprintf(stderr, "✔ AMD's public key is the root of the chain\n");
     } else {
         fprintf(stderr, "✘ AMD's public key isn't the root of the chain\n");
-        return 1;
+        return ATTESTATION_ERROR_AMD_ROOT_KEY_MISMATCH;
     }
     pub_key_free(amd_public_key);
 
@@ -60,11 +61,11 @@ int verify_snp_report_is_genuine(SnpReport* snp_report, cert_chain_t* cert_chain
         fprintf(stderr, "✔ SNP report is signed by certificate chain\n");
     } else {
         fprintf(stderr, "✘ SNP report isn't signed by the certificate chain\n");
-        return 1;
+        return ATTESTATION_ERROR_SNP_SIGNATURE_INVALID;
     }
     free(snp_report_without_signature);
 
-    return 0;
+    return ATTESTATION_SUCCESS;
 }
 
 
@@ -84,10 +85,10 @@ int verify_snp_report_has_report_data(SnpReport* snp_report, snp_report_data_t* 
 
     if (memcmp(snp_report->report_data, report_data, sizeof(snp_report_data_t)) == 0) {
         fprintf(stderr, "\n✔ Report data matches\n");
-        return 0;
+        return ATTESTATION_SUCCESS;
     } else {
         fprintf(stderr, "\n✘ Report data does not match\n");
-        return 1;
+        return ATTESTATION_ERROR_REPORT_DATA_MISMATCH;
     }
 }
 
@@ -100,7 +101,7 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
     uint8_t* security_policy = base64_decode(security_policy_b64, strlen(security_policy_b64), &policy_len);
     if (!security_policy) {
         fprintf(stderr, "Failed to decode security policy\n");
-        return 1;
+        return ATTESTATION_ERROR_SECURITY_POLICY_DECODE;
     }
 
     fprintf(stderr, "\nExpected Security Policy: \n```\n");
@@ -111,7 +112,7 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
     free(security_policy);
     if (!policy_hash) {
         fprintf(stderr, "Failed to compute SHA-256 hash of security policy\n");
-        return 1;
+        return ATTESTATION_ERROR_SECURITY_POLICY_HASH;
     }
 
     // Print policy hash and report host_data in hex, then free buffers
@@ -129,11 +130,11 @@ int verify_snp_report_has_security_policy(SnpReport* snp_report, const char* sec
     if (memcmp(policy_hash, snp_report->host_data, sizeof(snp_report->host_data)) == 0) {
         fprintf(stderr, "\n✔ SNP report's host_data matches the security policy hash\n");
         free(policy_hash);
-        return 0;
+        return ATTESTATION_SUCCESS;
     } else {
         fprintf(stderr, "\n✘ SNP report's host_data does not match security policy hash\n");
         free(policy_hash);
-        return 1;
+        return ATTESTATION_ERROR_HOST_DATA_MISMATCH;
     }
 }
 
@@ -145,14 +146,14 @@ int verify_utility_vm_build(SnpReport* snp_report, COSE_Sign1* uvm_endorsement) 
     fprintf(stderr, "\nEndorsement Issuer: \n%s", uvm_endorsement->protected_header->iss);
     if (strcmp(uvm_endorsement->protected_header->iss, aci_uvm_iss) != 0) {
         fprintf(stderr, "\n✘ Endorsement issuer does not match expected value\n");
-        return 1;
+        return ATTESTATION_ERROR_ENDORSEMENT_ISSUER_MISMATCH;
     }
     fprintf(stderr, " ✔\n");
 
     fprintf(stderr, "\nEndorsement Feed: \n%s", uvm_endorsement->protected_header->feed);
     if (strcmp(uvm_endorsement->protected_header->feed, aci_uvm_feed) != 0) {
         fprintf(stderr, "\n✘ Endorsement feed does not match expected value\n");
-        return 1;
+        return ATTESTATION_ERROR_ENDORSEMENT_FEED_MISMATCH;
     }
     fprintf(stderr, " ✔\n");
 
@@ -160,19 +161,19 @@ int verify_utility_vm_build(SnpReport* snp_report, COSE_Sign1* uvm_endorsement) 
     fprintf(stderr, "\nEndorsement SVN: \n%d (min: %d)", atoi(svn), aci_uvm_min_svn);
     if (atoi(svn) < aci_uvm_min_svn) {
         fprintf(stderr, "\n✘ Endorsement SVN does not meet minimum SVN\n");
-        return 1;
+        return ATTESTATION_ERROR_ENDORSEMENT_SVN_TOO_LOW;
     }
     fprintf(stderr, " ✔\n");
     free(svn);
 
     if (cert_chain_validate(uvm_endorsement->protected_header->x5_chain, 3) != 0) {
         fprintf(stderr, "\n✘ Endorsement certificate chain is invalid\n");
-        return 1;
+        return ATTESTATION_ERROR_ENDORSEMENT_CERT_CHAIN_INVALID;
     }
 
     if (verify_cose_sign1_signature(uvm_endorsement)) {
         fprintf(stderr, "\n✘ COSE_Sign1 signature verification failed\n");
-        return 1;
+        return ATTESTATION_ERROR_ENDORSEMENT_SIGNATURE_INVALID;
     }
 
     fprintf(stderr, "\n✔ COSE signature verified\n");
@@ -188,7 +189,7 @@ int verify_utility_vm_build(SnpReport* snp_report, COSE_Sign1* uvm_endorsement) 
     char* launch_measurement_hex_str = get_json_field((char*)uvm_endorsement->payload, "x-ms-sevsnpvm-launchmeasurement");
     if (!launch_measurement_hex_str) {
         fprintf(stderr, "✘ Failed to extract launch measurement from COSE_Sign1 payload\n");
-        return 1;
+        return ATTESTATION_ERROR_ENDORSEMENT_LAUNCH_MEASUREMENT_EXTRACT;
     }
     uint8_t* launch_measurement = hex_decode(
         launch_measurement_hex_str,
@@ -207,10 +208,10 @@ int verify_utility_vm_build(SnpReport* snp_report, COSE_Sign1* uvm_endorsement) 
     if (memcmp(launch_measurement, snp_report->measurement, sizeof(snp_report->measurement)) == 0) {
         fprintf(stderr, "\n✔ Utility VM endorsement matches SNP report\n");
         free(launch_measurement);
-        return 0;
+        return ATTESTATION_SUCCESS;
     } else {
         fprintf(stderr, "\n✘ Utility VM endorsement does not match SNP report\n");
         free(launch_measurement);
-        return 1;
+        return ATTESTATION_ERROR_ENDORSEMENT_LAUNCH_MEASUREMENT_MISMATCH;
     }
 }
