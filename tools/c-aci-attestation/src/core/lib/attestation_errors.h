@@ -1,0 +1,48 @@
+// attestation_errors.h
+// Error codes for SNP attestation verification failures
+
+#ifndef ATTESTATION_ERRORS_H
+#define ATTESTATION_ERRORS_H
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+// Success code
+#define ATTESTATION_SUCCESS 0
+
+// General error codes (1-9)
+#define ATTESTATION_ERROR_GENERIC 1
+#define ATTESTATION_ERROR_INVALID_INPUT 2
+#define ATTESTATION_ERROR_MEMORY_ALLOCATION 3
+
+// SNP report authenticity errors (10-19)  
+#define ATTESTATION_ERROR_CERT_CHAIN_INVALID 10
+#define ATTESTATION_ERROR_AMD_ROOT_KEY_MISMATCH 11
+#define ATTESTATION_ERROR_SNP_SIGNATURE_INVALID 12
+
+// Report data verification errors (20-29)
+#define ATTESTATION_ERROR_REPORT_DATA_MISMATCH 20
+
+// Security policy verification errors (30-39)
+#define ATTESTATION_ERROR_SECURITY_POLICY_DECODE 30
+#define ATTESTATION_ERROR_SECURITY_POLICY_HASH 31
+#define ATTESTATION_ERROR_HOST_DATA_MISMATCH 32
+
+// UVM endorsement verification errors (40-59)
+#define ATTESTATION_ERROR_ENDORSEMENT_ISSUER_MISMATCH 40
+#define ATTESTATION_ERROR_ENDORSEMENT_FEED_MISMATCH 41
+#define ATTESTATION_ERROR_ENDORSEMENT_SVN_TOO_LOW 42
+#define ATTESTATION_ERROR_ENDORSEMENT_CERT_CHAIN_INVALID 43
+#define ATTESTATION_ERROR_ENDORSEMENT_SIGNATURE_INVALID 44
+#define ATTESTATION_ERROR_ENDORSEMENT_LAUNCH_MEASUREMENT_EXTRACT 45
+#define ATTESTATION_ERROR_ENDORSEMENT_LAUNCH_MEASUREMENT_MISMATCH 46
+
+// Get readable error message for error code
+const char* attestation_error_message(int error_code);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // ATTESTATION_ERRORS_H
