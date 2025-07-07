@@ -8,6 +8,7 @@
 #include "lib/cert_chain.h"
 #include "lib/verification.h"
 #include "lib/cose.h"
+#include "lib/attestation_errors.h"
 #include <openssl/stack.h>
 #include <ctype.h>
 #include <openssl/evp.h>
@@ -103,18 +104,21 @@ int main(int argc, char** argv) {
     free(certificate_chain_pem);
 
     // Run checks
-    if (verify_snp_report_is_genuine(&snp_report, certificate_chain) != 0) {
+    int result = verify_snp_report_is_genuine(&snp_report, certificate_chain);
+    if (result != ATTESTATION_SUCCESS) {
         cert_chain_free(certificate_chain);
-        return 1;
+        return result;
     }
     cert_chain_free(certificate_chain);
 
-    if (verify_snp_report_has_report_data(&snp_report, &report_data) != 0) {
-        return 1;
+    result = verify_snp_report_has_report_data(&snp_report, &report_data);
+    if (result != ATTESTATION_SUCCESS) {
+        return result;
     }
 
-    if (verify_snp_report_has_security_policy(&snp_report, security_policy_b64) != 0) {
-        return 1;
+    result = verify_snp_report_has_security_policy(&snp_report, security_policy_b64);
+    if (result != ATTESTATION_SUCCESS) {
+        return result;
     }
 
     // Parse the utility VM build COSE from uvm_endorsements
@@ -145,10 +149,11 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    if (verify_utility_vm_build(&snp_report, uvm_endorsement) != 0) {
+    result = verify_utility_vm_build(&snp_report, uvm_endorsement);
+    if (result != ATTESTATION_SUCCESS) {
         cose_sign1_free(uvm_endorsement);
         free(cose_buf);
-        return 1;
+        return result;
     }
     cose_sign1_free(uvm_endorsement);
     free(cose_buf);
@@ -160,5 +165,5 @@ int main(int argc, char** argv) {
     fprintf(stderr, "✔ SNP Report has the expected security policy\n");
     fprintf(stderr, "✔ SNP Report utility VM measurement is endorsed by Microsoft\n");
     fprintf(stderr, "\nAttestation validation successful\n");
-    return 0;
+    return ATTESTATION_SUCCESS;
 }
