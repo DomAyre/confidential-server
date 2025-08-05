@@ -49,14 +49,13 @@
 				},
 				"python.testing.pytestArgs": [
 					"test",
-					"tools/encryption_wrapper/test",
-					"tools/c-aci-attestation/test/python"
+					"tools/encryption_wrapper/test"
 				],
 				"python.testing.unittestEnabled": false,
 				"python.testing.pytestEnabled": true
 			}
 		}
 	},
-	"postCreateCommand": "find . -name requirements.txt -exec pip install -r {} \\; make -C tools/c-aci-attestation",
+	"postCreateCommand": "find . -name requirements.txt -exec pip install -r {}",
 	"postStartCommand": "docker buildx create --use --bootstrap"
 }

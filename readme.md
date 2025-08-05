@@ -25,7 +25,7 @@ Users must be able to easily understand the server code in order to trust it, th
   - Uses hybrid encryption to allow large amount of data to be wrapped by a public key.
   - Based on [pyca/cryptography](https://cryptography.io/en/latest/).
   - Off the shelf hybrid encryption tools such as [Tink](https://developers.google.com/tink) were considered, but this custom solution keeps the implementation minimal and therefore the trusted computing base (TCB) as small as possible.
-- [C-ACI-Attestation](tools/c-aci-attestation/readme.md)
+- [C-ACI-Attestation](https://github.com/microsoft/confidential-aci-attestation)
   - Library for fetching and verifying attestation from Confidential ACI.
   - Core written in C, with bindings for different use cases, we use the python binding.
 
