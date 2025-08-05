@@ -12,8 +12,7 @@ COPY tools/encryption_wrapper /usr/local/bin/encryption_wrapper
 RUN chmod +x -R /usr/local/bin/encryption_wrapper
 
 # Install the attestation package
-COPY tools/c-aci-attestation/ /src/c-aci-attestation
-RUN make -C /src/c-aci-attestation clean python
+RUN pip install git+https://github.com/microsoft/confidential-aci-attestation.git@main#subdirectory=src/bindings/python
 
 ENV CONF_SERVER_URL=${CONF_SERVER_URL}
 ENV PATH="/opt/venv/bin:$PATH"
