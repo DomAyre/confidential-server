@@ -1,13 +1,16 @@
 import pytest
+import sys
 from utils import configs
 import yaml
 from config.parser import parse_config_file
+from server.args import parse_args
 import tempfile
 
 
 @pytest.mark.parametrize("config", configs(), ids=lambda c: c[1])
-def test_example_config_parses_without_error(config):
-    parse_config_file(config[1])
+def test_example_config_parses_without_error(config, monkeypatch):
+    monkeypatch.setattr(sys, "argv", ["prog", "--config", config[1]])
+    assert parse_args().config == parse_config_file(config[1])
 
 
 def test_config_with_list_of_policies():
