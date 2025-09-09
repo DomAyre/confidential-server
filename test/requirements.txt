@@ -1,6 +1,6 @@
 -r ../src/requirements.txt
 pytest==8.4.2
-pytest-cov==6.3.0
+pytest-cov==7.0.0
 pyyaml==6.0.2
 jsonschema==4.25.1
 docker==7.1.0
